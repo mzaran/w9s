@@ -52,7 +52,6 @@ type ResourceView[T any] struct {
 	filterQuery string
 	filtering   bool
 	modalOpen   bool
-	selectedRow int
 	sortCol     int  // -1 = default (by key name), 0..N = column index
 	sortAsc     bool // true = ascending, false = descending
 }
@@ -322,6 +321,9 @@ func (rv *ResourceView[T]) renderTable() {
 	rv.mu.RLock()
 	defer rv.mu.RUnlock()
 
+	// Save current selection before clearing.
+	savedRow, _ := rv.table.GetSelection()
+
 	rv.table.Clear()
 
 	// Header row with sort indicator.
@@ -363,8 +365,8 @@ func (rv *ResourceView[T]) renderTable() {
 	}
 
 	// Restore selection.
-	if rv.selectedRow > 0 && rv.selectedRow <= len(filtered) {
-		rv.table.Select(rv.selectedRow, 0)
+	if savedRow > 0 && savedRow <= len(filtered) {
+		rv.table.Select(savedRow, 0)
 	} else if len(filtered) > 0 {
 		rv.table.Select(1, 0)
 	}

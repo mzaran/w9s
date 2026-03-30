@@ -186,6 +186,7 @@ func (pv *ProfilesView) renderTable() {
 	pv.mu.RLock()
 	defer pv.mu.RUnlock()
 
+	savedRow, _ := pv.table.GetSelection()
 	pv.table.Clear()
 
 	headers := []string{"NAME", "IMAGE", "SYSTEM OVERLAYS", "RUNTIME OVERLAYS", "PARENT PROFILES", "COMMENT"}
@@ -212,7 +213,9 @@ func (pv *ProfilesView) renderTable() {
 		}
 	}
 
-	if len(pv.sorted) > 0 {
+	if savedRow > 0 && savedRow <= len(pv.sorted) {
+		pv.table.Select(savedRow, 0)
+	} else if len(pv.sorted) > 0 {
 		pv.table.Select(1, 0)
 	}
 }

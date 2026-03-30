@@ -170,6 +170,7 @@ func (ov *OverlaysView) renderOverlayList() {
 	defer ov.mu.RUnlock()
 
 	ov.breadcrumb.SetText("[yellow]Overlays[-]")
+	savedRow, _ := ov.table.GetSelection()
 	ov.table.Clear()
 
 	headers := []string{"NAME", "FILES", "SITE"}
@@ -197,7 +198,9 @@ func (ov *OverlaysView) renderOverlayList() {
 		}
 	}
 
-	if len(ov.sortedOverlays) > 0 {
+	if savedRow > 0 && savedRow <= len(ov.sortedOverlays) {
+		ov.table.Select(savedRow, 0)
+	} else if len(ov.sortedOverlays) > 0 {
 		ov.table.Select(1, 0)
 	}
 }
@@ -207,6 +210,7 @@ func (ov *OverlaysView) renderFileList() {
 	defer ov.mu.RUnlock()
 
 	ov.breadcrumb.SetText(fmt.Sprintf("[yellow]Overlays[-] > [green]%s[-]", ov.selectedOverlay))
+	savedRow, _ := ov.table.GetSelection()
 	ov.table.Clear()
 
 	headers := []string{"FILE"}
@@ -237,7 +241,9 @@ func (ov *OverlaysView) renderFileList() {
 			SetTextColor(color))
 	}
 
-	if len(files) > 0 {
+	if savedRow > 0 && savedRow <= len(files) {
+		ov.table.Select(savedRow, 0)
+	} else if len(files) > 0 {
 		ov.table.Select(1, 0)
 	}
 }

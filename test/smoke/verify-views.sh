@@ -84,6 +84,19 @@ OUT=$(capture)
 assert "Sort: back to default (NAME first)" "NAME" "$OUT"
 
 echo ""
+echo "--- Selection Persistence ---"
+# Move down 3 rows (to 4th node)
+tmux send-keys -t "$SESSION" Down Down Down; sleep 1
+# Wait for auto-refresh (6s > 5s interval)
+sleep 6
+# Press Enter — detail should show the 4th node, not the 1st
+tmux send-keys -t "$SESSION" Enter; sleep 1
+OUT=$(capture)
+assert "Selection: survived refresh (not first node)" "compute-04\|compute-03\|gpu" "$OUT"
+assert_not "Selection: not reset to compute-01" "Node: compute-01" "$OUT"
+tmux send-keys -t "$SESSION" Escape; sleep 1
+
+echo ""
 echo "--- Detail Pane ---"
 tmux send-keys -t "$SESSION" Enter; sleep 1
 OUT=$(capture)
