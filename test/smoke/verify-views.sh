@@ -69,6 +69,28 @@ assert "Nodes: has MAC data" "00:11:22\|44:" "$OUT"
 assert "Nodes: has Status" "Ready\|Pending" "$OUT"
 
 echo ""
+echo "--- Node Add Form ---"
+tmux send-keys -t "$SESSION" "a"; sleep 1
+OUT=$(capture)
+assert "Node Add: form appears" "Add Node\|Save\|Cancel" "$OUT"
+# Cancel with Escape
+tmux send-keys -t "$SESSION" Escape; sleep 1
+OUT=$(capture)
+assert "Node Add: cancelled, back to table" "NAME" "$OUT"
+assert_not "Node Add: not on help" "w9s Help" "$OUT"
+
+echo ""
+echo "--- Node Edit Form ---"
+# Select first node, press e to edit
+tmux send-keys -t "$SESSION" "e"; sleep 1
+OUT=$(capture)
+assert "Node Edit: form appears" "Edit Node\|Save\|Cancel" "$OUT"
+# Cancel
+tmux send-keys -t "$SESSION" Escape; sleep 1
+OUT=$(capture)
+assert "Node Edit: cancelled, back to table" "NAME" "$OUT"
+
+echo ""
 echo "--- Column Sort ---"
 # s should sort by next column, header should show sort indicator
 tmux send-keys -t "$SESSION" "s"; sleep 1

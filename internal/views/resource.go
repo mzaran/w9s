@@ -31,8 +31,9 @@ type Action[T any] struct {
 
 // ResourceViewConfig configures a generic ResourceView.
 type ResourceViewConfig[T any] struct {
-	Fetch   func() (map[string]T, error)
-	Columns []Column[T]
+	Fetch      func() (map[string]T, error)
+	Columns    []Column[T]
+	OnKeyExtra func(rv *ResourceView[T], event *tcell.EventKey) *tcell.EventKey // optional extra key handling
 	Actions []Action[T]
 	Detail  func(name string, item T) string
 	Filter  func(name string, item T, query string) bool
@@ -220,6 +221,11 @@ func (rv *ResourceView[T]) OnKey(event *tcell.EventKey) *tcell.EventKey {
 			rv.toggleSortDirection()
 			return nil
 		default:
+			if rv.config.OnKeyExtra != nil {
+				if result := rv.config.OnKeyExtra(rv, event); result == nil {
+					return nil
+				}
+			}
 			return rv.handleAction(event)
 		}
 	case tcell.KeyEscape:

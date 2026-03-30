@@ -5,9 +5,11 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 
 	"github.com/mzaran/w9s/internal/dao"
+	"github.com/mzaran/w9s/internal/ui"
 )
 
 // NewNodesView creates a ResourceView for Warewulf nodes.
@@ -30,6 +32,20 @@ func NewNodesView(app *tview.Application, client dao.WarewulfClient) View {
 				}
 				return "● Pending"
 			}},
+		},
+		OnKeyExtra: func(rv *ResourceView[*dao.WwNode], event *tcell.EventKey) *tcell.EventKey {
+			if event.Key() != tcell.KeyRune {
+				return event
+			}
+			switch event.Rune() {
+			case 'a':
+				showNodeAddForm(rv, client)
+				return nil
+			case 'e':
+				showNodeEditForm(rv, client)
+				return nil
+			}
+			return event
 		},
 		Actions: []Action[*dao.WwNode]{
 			{Key: 'd', Label: "Delete", Destructive: true, Execute: func(ctx context.Context, name string, _ *dao.WwNode) error {
@@ -82,4 +98,89 @@ func primaryMAC(n *dao.WwNode) string {
 		return nd.Hwaddr
 	}
 	return ""
+}
+
+func showNodeAddForm(rv *ResourceView[*dao.WwNode], client dao.WarewulfClient) {
+	rv.modalOpen = true
+	fields := []ui.FormField{
+		{Key: "name", Label: "Node Name", Width: 30},
+		{Key: "profile", Label: "Profile", Default: "default", Width: 30},
+		{Key: "ip", Label: "IP Address", Width: 20},
+		{Key: "mac", Label: "MAC Address", Width: 20},
+	}
+	ui.ShowForm(rv.Pages(), rv.App(), "node-add", rv.Name(), "Add Node", fields,
+		func(values map[string]string) {
+			name := values["name"]
+			if name == "" {
+				return
+			}
+			node := &dao.WwNode{}
+			node.Profiles = []string{values["profile"]}
+			if values["ip"] != "" || values["mac"] != "" {
+				node.NetDevs = map[string]*dao.NetDev{
+					"default": {
+						Ipaddr: values["ip"],
+						Hwaddr: values["mac"],
+					},
+				}
+				node.PrimaryNetDev = "default"
+			}
+			go func() {
+				if err := client.Nodes().Add(name, node); err != nil {
+					rv.SetLastError(err)
+				}
+				_ = rv.Refresh()
+			}()
+		},
+		func() {
+			rv.modalOpen = false
+			rv.App().SetFocus(rv.table)
+		},
+	)
+}
+
+func showNodeEditForm(rv *ResourceView[*dao.WwNode], client dao.WarewulfClient) {
+	name, node, ok := rv.selectedItem()
+	if !ok {
+		return
+	}
+	rv.modalOpen = true
+	fields := []ui.FormField{
+		{Key: "profile", Label: "Profile", Default: strings.Join(node.Profiles, ","), Width: 30},
+		{Key: "cluster", Label: "Cluster", Default: node.ClusterName, Width: 30},
+		{Key: "image", Label: "Image", Default: node.ImageName, Width: 30},
+		{Key: "ip", Label: "IP Address", Default: primaryIP(node), Width: 20},
+		{Key: "mac", Label: "MAC Address", Default: primaryMAC(node), Width: 20},
+		{Key: "comment", Label: "Comment", Default: node.Comment, Width: 40},
+	}
+	ui.ShowForm(rv.Pages(), rv.App(), "node-edit", rv.Name(), fmt.Sprintf("Edit Node: %s", name), fields,
+		func(values map[string]string) {
+			updated := &dao.WwNode{}
+			if values["profile"] != "" {
+				updated.Profiles = strings.Split(values["profile"], ",")
+			}
+			updated.ClusterName = values["cluster"]
+			updated.ImageName = values["image"]
+			updated.Comment = values["comment"]
+			if values["ip"] != "" || values["mac"] != "" {
+				updated.NetDevs = map[string]*dao.NetDev{
+					"default": {
+						Ipaddr: values["ip"],
+						Hwaddr: values["mac"],
+					},
+				}
+				updated.PrimaryNetDev = "default"
+			}
+			go func() {
+				if err := client.Nodes().Update(name, updated); err != nil {
+					rv.SetLastError(err)
+				}
+				_ = rv.Refresh()
+			}()
+		},
+		func() {
+			rv.modalOpen = false
+			rv.App().SetFocus(rv.table)
+		},
+	)
 }
