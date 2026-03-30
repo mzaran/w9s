@@ -1,54 +1,62 @@
 package ui
 
 import (
-	"strings"
-	"time"
+	"fmt"
 
-	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 )
 
-// StatusBar is the bottom bar component showing keyboard hints and messages.
+// StatusBar is the bottom bar showing keyboard hints and item count.
 type StatusBar struct {
 	*tview.TextView
-
-	app   *tview.Application
-	hints []string
+	theme *Theme
 }
 
-// NewStatusBar creates a new StatusBar component.
-func NewStatusBar(app *tview.Application) *StatusBar {
-	sb := &StatusBar{
-		TextView: tview.NewTextView().SetDynamicColors(true).SetTextAlign(tview.AlignLeft),
-		app:      app,
-	}
-	sb.SetBackgroundColor(tcell.ColorDarkBlue)
-	return sb
+// NewStatusBar creates a new themed status bar.
+func NewStatusBar(theme *Theme) *StatusBar {
+	tv := tview.NewTextView().
+		SetDynamicColors(true).
+		SetTextAlign(tview.AlignLeft)
+	tv.SetBackgroundColor(theme.BgColor)
+	tv.SetBorder(false)
+	return &StatusBar{TextView: tv, theme: theme}
 }
 
-// SetHints updates the keyboard hints displayed in the status bar.
-func (sb *StatusBar) SetHints(hints []string) {
-	sb.hints = hints
-	sb.renderHints()
-}
+// SetHints displays keyboard hints. Each hint is "key action" format.
+func (s *StatusBar) SetHints(hints []string) {
+	s.Clear()
+	key := ColorToHex(s.theme.HotkeyFg)
+	hint := ColorToHex(s.theme.HintFg)
 
-// SetMessage temporarily displays a message, reverting to hints after duration.
-func (sb *StatusBar) SetMessage(msg string, duration time.Duration) {
-	sb.SetText(" " + msg)
-	if duration > 0 {
-		go func() {
-			time.Sleep(duration)
-			sb.app.QueueUpdateDraw(func() {
-				sb.renderHints()
-			})
-		}()
+	fmt.Fprint(s, " ")
+	for _, h := range hints {
+		k, a := splitHint(h)
+		if a != "" {
+			fmt.Fprintf(s, "[#%06x::b]%s[-:-:-] [#%06x]%s[-]  ", key, k, hint, a)
+		} else {
+			fmt.Fprintf(s, "[#%06x]%s[-]  ", hint, h)
+		}
 	}
 }
 
-func (sb *StatusBar) renderHints() {
-	var parts []string
-	for _, h := range sb.hints {
-		parts = append(parts, "[yellow]"+h+"[-]")
+// SetCount appends a right-aligned count (e.g., "10 nodes").
+func (s *StatusBar) SetCount(label string, count int) {
+	cnt := ColorToHex(s.theme.CountFg)
+	fmt.Fprintf(s, "[#%06x::d]%d %s[-:-:-]", cnt, count, label)
+}
+
+// SetMessage displays a temporary message (replaces hints).
+func (s *StatusBar) SetMessage(msg string) {
+	s.Clear()
+	fmt.Fprintf(s, " [white]%s[-]", msg)
+}
+
+// splitHint splits "key action" on first space.
+func splitHint(s string) (string, string) {
+	for i := 0; i < len(s); i++ {
+		if s[i] == ' ' {
+			return s[:i], s[i+1:]
+		}
 	}
-	sb.SetText(" " + strings.Join(parts, "  |  "))
+	return s, ""
 }

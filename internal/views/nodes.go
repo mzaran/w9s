@@ -23,8 +23,13 @@ func NewNodesView(app *tview.Application, client dao.WarewulfClient) View {
 			{Name: "Profiles", Width: 20, Extract: func(_ string, n *dao.WwNode) string { return strings.Join(n.Profiles, ",") }},
 			{Name: "Primary IP", Width: 16, Extract: func(_ string, n *dao.WwNode) string { return primaryIP(n) }},
 			{Name: "MAC", Width: 18, Extract: func(_ string, n *dao.WwNode) string { return primaryMAC(n) }},
-			{Name: "System Overlays", Width: 25, Extract: func(_ string, n *dao.WwNode) string { return strings.Join(n.SystemOverlay, ",") }},
-			{Name: "Runtime Overlays", Width: 25, Extract: func(_ string, n *dao.WwNode) string { return strings.Join(n.RuntimeOverlay, ",") }},
+			{Name: "Overlays", Width: 20, Extract: func(_ string, n *dao.WwNode) string { return strings.Join(n.SystemOverlay, ",") }},
+			{Name: "Status", Width: 12, Extract: func(_ string, n *dao.WwNode) string {
+				if n.ImageName != "" && len(n.Profiles) > 0 {
+					return "● Ready"
+				}
+				return "● Pending"
+			}},
 		},
 		Actions: []Action[*dao.WwNode]{
 			{Key: 'd', Label: "Delete", Destructive: true, Execute: func(ctx context.Context, name string, _ *dao.WwNode) error {

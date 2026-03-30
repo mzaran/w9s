@@ -5,53 +5,81 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 )
 
-// Header is the top bar component showing cluster name, view tabs, and branding.
+// Header is the top section: logo + cluster info + numbered tabs.
 type Header struct {
 	*tview.Flex
-
-	clusterText *tview.TextView
-	tabsText    *tview.TextView
-	brandText   *tview.TextView
-	views       []string
-	currentView string
+	theme    *Theme
+	logo     *tview.TextView
+	info     *tview.TextView
+	tabs     *tview.TextView
+	views    []string
+	current  string
+	endpoint string
+	version  string
 }
 
-// NewHeader creates a new Header component.
-func NewHeader() *Header {
+// NewHeader creates a new Design C header with logo, info panel, and tabs.
+func NewHeader(theme *Theme) *Header {
 	h := &Header{
-		Flex:        tview.NewFlex().SetDirection(tview.FlexColumn),
-		clusterText: tview.NewTextView().SetDynamicColors(true).SetTextAlign(tview.AlignLeft),
-		tabsText:    tview.NewTextView().SetDynamicColors(true).SetTextAlign(tview.AlignCenter),
-		brandText:   tview.NewTextView().SetDynamicColors(true).SetTextAlign(tview.AlignRight),
+		Flex:  tview.NewFlex().SetDirection(tview.FlexRow),
+		theme: theme,
 	}
 
-	h.brandText.SetText("[blue::b]w9s.sh[-::-]")
+	h.logo = NewLogo(theme)
+	h.info = tview.NewTextView().SetDynamicColors(true)
+	h.info.SetBackgroundColor(theme.BgColor)
+	h.info.SetBorder(false)
 
-	h.AddItem(h.clusterText, 20, 0, false).
-		AddItem(h.tabsText, 0, 1, false).
-		AddItem(h.brandText, 10, 0, false)
+	h.tabs = tview.NewTextView().SetDynamicColors(true)
+	h.tabs.SetBackgroundColor(theme.BgColor)
+	h.tabs.SetBorder(false)
 
-	h.SetBackgroundColor(tcell.ColorDarkBlue)
-	h.clusterText.SetBackgroundColor(tcell.ColorDarkBlue)
-	h.tabsText.SetBackgroundColor(tcell.ColorDarkBlue)
-	h.brandText.SetBackgroundColor(tcell.ColorDarkBlue)
+	topRow := tview.NewFlex().SetDirection(tview.FlexColumn).
+		AddItem(h.logo, 14, 0, false).
+		AddItem(h.info, 0, 1, false)
+	topRow.SetBackgroundColor(theme.BgColor)
+	topRow.SetBorder(false)
+
+	h.Flex.AddItem(topRow, 3, 0, false).
+		AddItem(h.tabs, 1, 0, false)
+	h.SetBackgroundColor(theme.BgColor)
+	h.SetBorder(false)
 
 	return h
 }
 
-// SetClusterName updates the cluster name display.
-func (h *Header) SetClusterName(name string) {
-	h.clusterText.SetText(fmt.Sprintf("[white::b] %s[-::-]", name))
+// SetClusterInfo updates the endpoint and version display.
+func (h *Header) SetClusterInfo(endpoint, version string) {
+	h.endpoint = endpoint
+	h.version = version
+	h.renderInfo(0, 0, 0, 0, 0)
 }
 
-// SetCurrentView highlights the current view tab.
-func (h *Header) SetCurrentView(name string) {
-	h.currentView = name
-	h.renderTabs()
+// SetMetrics updates the header with cluster metrics.
+func (h *Header) SetMetrics(nodes, up, images, profiles, overlays int) {
+	h.renderInfo(nodes, up, images, profiles, overlays)
+}
+
+func (h *Header) renderInfo(nodes, up, images, profiles, overlays int) {
+	h.info.Clear()
+	conn := ColorToHex(h.theme.ConnectedFg)
+	dim := ColorToHex(h.theme.DimFg)
+	val := ColorToHex(h.theme.MetricValue)
+	lbl := ColorToHex(h.theme.MetricLabel)
+
+	fmt.Fprintf(h.info, "[white::b]Warewulf Cluster Manager[-:-:-]")
+	fmt.Fprintf(h.info, "       [#%06x]● Connected[-]  [white]%s[-]      [#%06x]%s[-]\n",
+		conn, h.endpoint, dim, h.version)
+	fmt.Fprintf(h.info, "[#%06x]w9s.sh[-]", dim)
+	if nodes > 0 || images > 0 || profiles > 0 {
+		fmt.Fprintf(h.info, "                          [#%06x]Nodes:[-] [#%06x]%d[-][#%06x]/%d[-]",
+			lbl, val, up, lbl, nodes)
+		fmt.Fprintf(h.info, "  [#%06x]Images:[-] [#%06x]%d[-]", lbl, val, images)
+		fmt.Fprintf(h.info, "  [#%06x]Profiles:[-] [#%06x]%d[-]", lbl, val, profiles)
+	}
 }
 
 // SetViews sets the list of view names for the tab bar.
@@ -60,15 +88,38 @@ func (h *Header) SetViews(views []string) {
 	h.renderTabs()
 }
 
+// SetCurrentView highlights the active tab.
+func (h *Header) SetCurrentView(name string) {
+	h.current = name
+	h.renderTabs()
+}
+
+// SetClusterName is a compatibility method — calls SetClusterInfo.
+func (h *Header) SetClusterName(name string) {
+	h.SetClusterInfo(name, h.version)
+}
+
 func (h *Header) renderTabs() {
-	var parts []string
+	h.tabs.Clear()
+	activeBg := ColorToHex(h.theme.TabActiveBg)
+	num := ColorToHex(h.theme.TabNumber)
+	name := ColorToHex(h.theme.TabName)
+
+	fmt.Fprint(h.tabs, " ")
 	for i, v := range h.views {
-		label := fmt.Sprintf(" %d:%s ", i+1, v)
-		if v == h.currentView {
-			parts = append(parts, fmt.Sprintf("[black:white:b]%s[-:-:-]", label))
+		n := i + 1
+		label := capitalize(v)
+		if v == h.current {
+			fmt.Fprintf(h.tabs, "[white:#%06x::b] %d %s [-:-:-] ", activeBg, n, label)
 		} else {
-			parts = append(parts, fmt.Sprintf("[white:-:-]%s[-:-:-]", label))
+			fmt.Fprintf(h.tabs, "[#%06x]%d[-] [#%06x]%s[-]  ", num, n, name, label)
 		}
 	}
-	h.tabsText.SetText(strings.Join(parts, " "))
+}
+
+func capitalize(s string) string {
+	if s == "" {
+		return s
+	}
+	return strings.ToUpper(s[:1]) + s[1:]
 }

@@ -78,24 +78,26 @@ func (a *App) Context() context.Context {
 
 // initUI creates the main layout: header + pages + status bar.
 func (a *App) initUI() {
-	// Header bar (1 row).
-	a.header = ui.NewHeader()
+	theme := &ui.DefaultTheme
+
+	// Header: logo (3 rows) + tabs (1 row) = 4 rows.
+	a.header = ui.NewHeader(theme)
 
 	// Content pages.
 	a.pages = tview.NewPages()
 
 	// Status bar (1 row).
-	a.statusBar = ui.NewStatusBar(a.tviewApp)
-	a.statusBar.SetHints([]string{"q Quit", "Tab Next View", "? Help", "1-7 Views"})
+	a.statusBar = ui.NewStatusBar(theme)
+	a.statusBar.SetHints([]string{"q Quit", "Tab Next", "? Help", "1-7 Views"})
 
-	// Set cluster name in header.
+	// Set cluster info in header.
 	if a.config.ActiveCluster != nil {
-		a.header.SetClusterName(a.config.ActiveCluster.Endpoint)
+		a.header.SetClusterInfo(a.config.ActiveCluster.Endpoint, "")
 	}
 
 	// Main layout: vertical flex.
 	mainLayout := tview.NewFlex().SetDirection(tview.FlexRow).
-		AddItem(a.header, 1, 0, false).
+		AddItem(a.header, 4, 0, false).
 		AddItem(a.pages, 0, 1, true).
 		AddItem(a.statusBar, 1, 0, false)
 
