@@ -34,7 +34,8 @@ type ResourceViewConfig[T any] struct {
 	Fetch      func() (map[string]T, error)
 	Columns    []Column[T]
 	OnKeyExtra func(rv *ResourceView[T], event *tcell.EventKey) *tcell.EventKey // optional extra key handling
-	Actions []Action[T]
+	ExtraHints []string                                                          // additional hints for OnKeyExtra actions
+	Actions    []Action[T]
 	Detail  func(name string, item T) string
 	Filter  func(name string, item T, query string) bool
 }
@@ -119,6 +120,7 @@ func (rv *ResourceView[T]) Hints() []string {
 		"Enter Detail",
 		"r Refresh",
 	}
+	hints = append(hints, rv.config.ExtraHints...)
 	for _, a := range rv.config.Actions {
 		hints = append(hints, fmt.Sprintf("%c %s", a.Key, a.Label))
 	}

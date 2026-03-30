@@ -33,6 +33,7 @@ func NewNodesView(app *tview.Application, client dao.WarewulfClient) View {
 				return "● Pending"
 			}},
 		},
+		ExtraHints: []string{"a Add", "e Edit"},
 		OnKeyExtra: func(rv *ResourceView[*dao.WwNode], event *tcell.EventKey) *tcell.EventKey {
 			if event.Key() != tcell.KeyRune {
 				return event

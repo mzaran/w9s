@@ -36,6 +36,7 @@ func NewImagesView(app *tview.Application, client dao.WarewulfClient) View {
 				return "no"
 			}},
 		},
+		ExtraHints: []string{"i Import"},
 		OnKeyExtra: func(rv *ResourceView[*dao.WwImage], event *tcell.EventKey) *tcell.EventKey {
 			if event.Key() == tcell.KeyRune && event.Rune() == 'i' {
 				showImageImportForm(rv, client)
