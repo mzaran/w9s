@@ -75,7 +75,7 @@ func (ov *OverlaysView) Render() tview.Primitive {
 
 func (ov *OverlaysView) Hints() []string {
 	if ov.mode == overlayModeFiles {
-		return []string{"Esc Back", "Enter View File", "r Refresh"}
+		return []string{"Esc Back", "Enter View File", "t Render Template", "r Refresh"}
 	}
 	return []string{"Enter Browse Files", "r Refresh"}
 }
@@ -111,9 +111,15 @@ func (ov *OverlaysView) OnKey(event *tcell.EventKey) *tcell.EventKey {
 			return nil
 		}
 	case tcell.KeyRune:
-		if event.Rune() == 'r' {
+		switch event.Rune() {
+		case 'r':
 			_ = ov.Refresh()
 			return nil
+		case 't':
+			if ov.mode == overlayModeFiles {
+				ov.showRenderForm()
+				return nil
+			}
 		}
 	}
 	return event
@@ -313,4 +319,59 @@ func (ov *OverlaysView) showFileContent(overlay, path string) {
 			})
 		})
 	}()
+}
+
+func (ov *OverlaysView) showRenderForm() {
+	ov.mu.RLock()
+	row, _ := ov.table.GetSelection()
+	ovl, ok := ov.overlays[ov.selectedOverlay]
+	if !ok {
+		ov.mu.RUnlock()
+		return
+	}
+	files := make([]string, len(ovl.Files))
+	copy(files, ovl.Files)
+	sort.Strings(files)
+	idx := row - 1
+	if idx < 0 || idx >= len(files) {
+		ov.mu.RUnlock()
+		return
+	}
+	selectedFile := files[idx]
+	overlay := ov.selectedOverlay
+	ov.mu.RUnlock()
+
+	ov.modalOpen = true
+	fields := []ui.FormField{
+		{Key: "node", Label: "Node Name", Default: "", Width: 30},
+	}
+	ui.ShowForm(ov.Pages(), ov.App(), "template-render", ov.Name(), "Render Template", fields,
+		func(values map[string]string) {
+			nodeName := values["node"]
+			if nodeName == "" {
+				return
+			}
+			go func() {
+				file, err := ov.client.Overlays().GetFile(overlay, selectedFile, nodeName)
+				if err != nil {
+					ov.SetLastError(err)
+					return
+				}
+				ov.App().QueueUpdateDraw(func() {
+					title := fmt.Sprintf("%s: %s (rendered for %s)", overlay, selectedFile, nodeName)
+					ov.modalOpen = true
+					ui.ShowDetail(ov.Pages(), ov.App(), "rendered", title, file.Contents, func() {
+						ov.modalOpen = false
+						ov.Pages().RemovePage("rendered")
+						ov.Pages().SwitchToPage(ov.Name())
+						ov.App().SetFocus(ov.table)
+					})
+				})
+			}()
+		},
+		func() {
+			ov.modalOpen = false
+			ov.App().SetFocus(ov.table)
+		},
+	)
 }

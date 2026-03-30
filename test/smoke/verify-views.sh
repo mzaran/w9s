@@ -214,12 +214,25 @@ assert "Overlay: file list shown" "FILE" "$OUT"
 tmux send-keys -t "$SESSION" Enter; sleep 2
 OUT=$(capture)
 assert "Overlay: file content shown" "content\|#\|ww4\|conf\|warewulf\|network\|etc" "$OUT"
-# Escape → close modal, return to file list
+# Escape → close file view, return to file list
 tmux send-keys -t "$SESSION" Escape; sleep 1
 OUT=$(capture)
 assert "Overlay: back to file list after Escape" "FILE" "$OUT"
 assert_not "Overlay: not on help after file modal" "w9s Help" "$OUT"
+
+# Template render: t key on a .ww file should prompt for node name
+# First find a .ww file — navigate down to find one
+tmux send-keys -t "$SESSION" Escape; sleep 1  # back to overlay list
+# Go to a known overlay with .ww files (wwinit has templates)
+tmux send-keys -t "$SESSION" Down Down Down Down Down Down Down Down Down Down; sleep 1  # scroll to find one
+tmux send-keys -t "$SESSION" Enter; sleep 1  # drill into files
+tmux send-keys -t "$SESSION" "t"; sleep 1  # render template
+OUT=$(capture)
+assert "Template: render form appears" "Render Template\|Save\|Cancel" "$OUT"
+tmux send-keys -t "$SESSION" Escape; sleep 1
+
 # Escape → back to overlay list
+tmux send-keys -t "$SESSION" Escape; sleep 1
 tmux send-keys -t "$SESSION" Escape; sleep 1
 OUT=$(capture)
 assert "Overlay: back to overlay list" "wwinit\|SITE\|NAME" "$OUT"
