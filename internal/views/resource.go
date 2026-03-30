@@ -58,7 +58,7 @@ func NewResourceView[T any](name, title string, app *tview.Application, cfg Reso
 	rv := &ResourceView[T]{
 		BaseView: NewBaseView(name, title),
 		config:   cfg,
-		items:    make(map[string]T),
+		// items left nil — first Refresh() will do a synchronous load
 	}
 	rv.SetApp(app)
 	return rv
@@ -124,27 +124,46 @@ func (rv *ResourceView[T]) Hints() []string {
 	return hints
 }
 
-// Refresh fetches data in a background goroutine and updates the table.
+// Refresh fetches data and updates the table.
+// The first call (when items is nil) is synchronous so the initial frame has data.
+// Subsequent calls use a background goroutine for non-blocking refreshes.
 func (rv *ResourceView[T]) Refresh() error {
 	if rv.IsRefreshing() {
 		return nil
 	}
 	rv.SetRefreshing(true)
 
+	rv.mu.RLock()
+	firstLoad := rv.items == nil
+	rv.mu.RUnlock()
+
+	if firstLoad {
+		defer rv.SetRefreshing(false)
+		items, err := rv.config.Fetch()
+		if err != nil {
+			rv.SetLastError(err)
+			return nil
+		}
+		rv.mu.Lock()
+		rv.items = items
+		rv.sortedKeys = sortKeys(items)
+		rv.mu.Unlock()
+		rv.SetLastError(nil)
+		rv.renderTable()
+		return nil
+	}
+
 	go func() {
 		defer rv.SetRefreshing(false)
-
 		items, err := rv.config.Fetch()
 		if err != nil {
 			rv.SetLastError(err)
 			return
 		}
-
 		rv.mu.Lock()
 		rv.items = items
 		rv.sortedKeys = sortKeys(items)
 		rv.mu.Unlock()
-
 		rv.SetLastError(nil)
 		rv.renderTable()
 	}()
