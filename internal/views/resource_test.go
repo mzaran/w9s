@@ -78,15 +78,10 @@ func TestResourceViewRefreshPopulatesItems(t *testing.T) {
 	rv := newTestResourceView(data, nil)
 	require.NoError(t, rv.Init(context.Background()))
 
-	// Refresh launches a goroutine; we need to wait for it.
+	// First Refresh is synchronous — completes immediately.
 	err := rv.Refresh()
 	require.NoError(t, err)
-
-	// Wait for the async refresh to complete.
-	require.Eventually(t, func() bool {
-		return !rv.IsRefreshing()
-	}, 2*time.Second, 10*time.Millisecond)
-
+	assert.False(t, rv.IsRefreshing())
 	assert.Nil(t, rv.LastError())
 }
 
@@ -133,13 +128,10 @@ func TestResourceViewEmptyData(t *testing.T) {
 	rv := newTestResourceView(map[string]testItem{}, nil)
 	require.NoError(t, rv.Init(context.Background()))
 
+	// Empty map is non-nil, so first Refresh treats it as sync first load.
 	err := rv.Refresh()
 	require.NoError(t, err)
-
-	require.Eventually(t, func() bool {
-		return !rv.IsRefreshing()
-	}, 2*time.Second, 10*time.Millisecond)
-
+	assert.False(t, rv.IsRefreshing())
 	assert.Nil(t, rv.LastError())
 }
 
@@ -148,13 +140,10 @@ func TestResourceViewFetchError(t *testing.T) {
 	rv := newTestResourceView(nil, fetchErr)
 	require.NoError(t, rv.Init(context.Background()))
 
+	// First Refresh is sync — error stored immediately.
 	err := rv.Refresh()
-	require.NoError(t, err) // Refresh itself returns nil; error is stored.
-
-	require.Eventually(t, func() bool {
-		return !rv.IsRefreshing()
-	}, 2*time.Second, 10*time.Millisecond)
-
+	require.NoError(t, err)
+	assert.False(t, rv.IsRefreshing())
 	assert.Error(t, rv.LastError())
 	assert.Contains(t, rv.LastError().Error(), "connection refused")
 }
@@ -172,7 +161,7 @@ func TestResourceViewRenderNilBeforeInit(t *testing.T) {
 }
 
 func TestResourceViewConcurrentRefresh(t *testing.T) {
-	// Verify that calling Refresh while already refreshing is safe.
+	// First call is sync (items nil). Then test that rapid async calls are safe.
 	var mu sync.Mutex
 	callCount := 0
 
@@ -192,9 +181,17 @@ func TestResourceViewConcurrentRefresh(t *testing.T) {
 	rv := views.NewResourceView("test", "Test", app, cfg)
 	require.NoError(t, rv.Init(context.Background()))
 
-	// First refresh starts.
+	// First refresh: sync (items nil), completes immediately.
 	_ = rv.Refresh()
-	// Second refresh should be a no-op because already refreshing.
+	assert.False(t, rv.IsRefreshing())
+
+	mu.Lock()
+	assert.Equal(t, 1, callCount)
+	mu.Unlock()
+
+	// Second refresh: async (items non-nil), starts goroutine.
+	_ = rv.Refresh()
+	// Third refresh: should be skipped (already refreshing).
 	_ = rv.Refresh()
 
 	require.Eventually(t, func() bool {
@@ -203,6 +200,6 @@ func TestResourceViewConcurrentRefresh(t *testing.T) {
 
 	mu.Lock()
 	defer mu.Unlock()
-	// Fetch should have been called exactly once since the second call was skipped.
-	assert.Equal(t, 1, callCount)
+	// 1 sync + 1 async = 2 (third was skipped).
+	assert.Equal(t, 2, callCount)
 }
