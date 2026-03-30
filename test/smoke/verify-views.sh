@@ -165,6 +165,24 @@ assert "Profile Detail: returns to profiles after Escape" "SYSTEM OVERLAYS\|NAME
 assert_not "Profile Detail: not on help after Escape" "w9s Help" "$OUT"
 
 echo ""
+echo "--- Profile Add ---"
+tmux send-keys -t "$SESSION" "a"; sleep 1
+OUT=$(capture)
+assert "Profile Add: form appears" "Add Profile\|Save\|Cancel" "$OUT"
+tmux send-keys -t "$SESSION" Escape; sleep 1
+OUT=$(capture)
+assert "Profile Add: cancelled, back to table" "NAME" "$OUT"
+
+echo ""
+echo "--- Profile Delete ---"
+tmux send-keys -t "$SESSION" "d"; sleep 1
+OUT=$(capture)
+assert "Profile Delete: confirmation" "Are you sure\|Delete\|Yes\|No" "$OUT"
+tmux send-keys -t "$SESSION" Escape; sleep 1
+OUT=$(capture)
+assert "Profile Delete: cancelled" "NAME\|default" "$OUT"
+
+echo ""
 echo "--- Images (Tab 4) ---"
 tmux send-keys -t "$SESSION" "4"; sleep 2
 OUT=$(capture)

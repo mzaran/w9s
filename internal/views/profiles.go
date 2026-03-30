@@ -71,7 +71,7 @@ func (pv *ProfilesView) Render() tview.Primitive {
 }
 
 func (pv *ProfilesView) Hints() []string {
-	return []string{"r Refresh", "Enter Detail", "/ Filter"}
+	return []string{"a Add", "d Delete", "Enter Detail", "r Refresh"}
 }
 
 // IsFiltering reports whether a modal is open (implements Filterable).
@@ -96,8 +96,15 @@ func (pv *ProfilesView) OnKey(event *tcell.EventKey) *tcell.EventKey {
 		pv.showDetail()
 		return nil
 	case tcell.KeyRune:
-		if event.Rune() == 'r' {
+		switch event.Rune() {
+		case 'r':
 			_ = pv.Refresh()
+			return nil
+		case 'a':
+			pv.showAddForm()
+			return nil
+		case 'd':
+			pv.confirmDelete()
 			return nil
 		}
 	}
@@ -262,4 +269,71 @@ func (pv *ProfilesView) buildInheritanceTree(node *tview.TreeNode, name string, 
 		node.AddChild(tview.NewTreeNode(fmt.Sprintf("sys: %s", strings.Join(p.SystemOverlay, ","))).
 			SetColor(tcell.ColorDarkCyan).SetSelectable(false))
 	}
+}
+
+func (pv *ProfilesView) showAddForm() {
+	pv.modalOpen = true
+	fields := []ui.FormField{
+		{Key: "name", Label: "Profile Name", Width: 30},
+		{Key: "parent", Label: "Parent Profile", Default: "default", Width: 30},
+		{Key: "cluster", Label: "Cluster", Width: 30},
+		{Key: "image", Label: "Image", Width: 30},
+		{Key: "comment", Label: "Comment", Width: 40},
+	}
+	ui.ShowForm(pv.Pages(), pv.App(), "profile-add", pv.Name(), "Add Profile", fields,
+		func(values map[string]string) {
+			name := values["name"]
+			if name == "" {
+				return
+			}
+			profile := &dao.WwProfile{
+				Comment:     values["comment"],
+				ClusterName: values["cluster"],
+				ImageName:   values["image"],
+			}
+			if values["parent"] != "" {
+				profile.Profiles = []string{values["parent"]}
+			}
+			go func() {
+				if err := pv.client.Profiles().Add(name, profile); err != nil {
+					pv.SetLastError(err)
+				}
+				_ = pv.Refresh()
+			}()
+		},
+		func() {
+			pv.modalOpen = false
+			pv.App().SetFocus(pv.table)
+		},
+	)
+}
+
+func (pv *ProfilesView) confirmDelete() {
+	pv.mu.RLock()
+	row, _ := pv.table.GetSelection()
+	idx := row - 1
+	if idx < 0 || idx >= len(pv.sorted) {
+		pv.mu.RUnlock()
+		return
+	}
+	name := pv.sorted[idx]
+	pv.mu.RUnlock()
+
+	pv.modalOpen = true
+	ui.ShowConfirm(pv.App(), pv.Pages(), "Delete Profile",
+		fmt.Sprintf("Are you sure you want to delete profile '%s'?", name),
+		func() {
+			go func() {
+				if err := pv.client.Profiles().Delete(name); err != nil {
+					pv.SetLastError(err)
+				}
+				_ = pv.Refresh()
+			}()
+		},
+		func() {
+			pv.modalOpen = false
+			pv.Pages().SwitchToPage(pv.Name())
+			pv.App().SetFocus(pv.table)
+		},
+	)
 }
