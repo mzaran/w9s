@@ -69,6 +69,28 @@ assert "Nodes: has MAC data" "00:11:22\|44:" "$OUT"
 assert "Nodes: has Status" "Built\|Stale\|Ready\|No Image" "$OUT"
 
 echo ""
+echo "--- Export ---"
+# x should export current table to CSV
+rm -f /tmp/w9s-export-*.csv
+tmux send-keys -t "$SESSION" "x"; sleep 2
+ls /tmp/w9s-export-*.csv >/dev/null 2>&1
+if [ $? -eq 0 ]; then
+  TOTAL=$((TOTAL+1)); PASS=$((PASS+1)); echo "  PASS: Export: CSV file created"
+  EXPORTFILE=$(ls /tmp/w9s-export-*.csv | head -1)
+  if head -1 "$EXPORTFILE" | grep -qi "name"; then
+    TOTAL=$((TOTAL+1)); PASS=$((PASS+1)); echo "  PASS: Export: CSV has headers"
+  else
+    TOTAL=$((TOTAL+1)); FAIL=$((FAIL+1)); echo "  FAIL: Export: CSV missing headers"
+  fi
+  rm -f /tmp/w9s-export-*.csv
+else
+  TOTAL=$((TOTAL+1)); FAIL=$((FAIL+1)); echo "  FAIL: Export: no CSV file created"
+  TOTAL=$((TOTAL+1)); FAIL=$((FAIL+1)); echo "  FAIL: Export: CSV headers (skipped)"
+fi
+# Close export confirmation pane
+tmux send-keys -t "$SESSION" Escape; sleep 1
+
+echo ""
 echo "--- Node Add Form ---"
 tmux send-keys -t "$SESSION" "a"; sleep 1
 OUT=$(capture)

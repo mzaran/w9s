@@ -3,9 +3,11 @@ package views
 import (
 	"context"
 	"fmt"
+	"os"
 	"sort"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
@@ -117,6 +119,7 @@ func (rv *ResourceView[T]) Hints() []string {
 		"/ Filter",
 		"s Sort",
 		"S Reverse",
+		"x Export",
 		"Enter Detail",
 		"r Refresh",
 	}
@@ -221,6 +224,9 @@ func (rv *ResourceView[T]) OnKey(event *tcell.EventKey) *tcell.EventKey {
 			return nil
 		case 'S':
 			rv.toggleSortDirection()
+			return nil
+		case 'x':
+			rv.exportCSV()
 			return nil
 		default:
 			if rv.config.OnKeyExtra != nil {
@@ -436,6 +442,59 @@ func (rv *ResourceView[T]) toggleSortDirection() {
 	}
 	rv.sortAsc = !rv.sortAsc
 	rv.renderTable()
+}
+
+func (rv *ResourceView[T]) exportCSV() {
+	rv.mu.RLock()
+	defer rv.mu.RUnlock()
+
+	filtered := rv.filteredKeys()
+	if len(filtered) == 0 {
+		return
+	}
+
+	// Build CSV content.
+	var b strings.Builder
+
+	// Header row.
+	for i, c := range rv.config.Columns {
+		if i > 0 {
+			b.WriteByte(',')
+		}
+		b.WriteString(c.Name)
+	}
+	b.WriteByte('\n')
+
+	// Data rows.
+	for _, key := range filtered {
+		item := rv.items[key]
+		for i, c := range rv.config.Columns {
+			if i > 0 {
+				b.WriteByte(',')
+			}
+			val := c.Extract(key, item)
+			// Quote values containing commas or newlines.
+			if strings.ContainsAny(val, ",\n\"") {
+				val = "\"" + strings.ReplaceAll(val, "\"", "\"\"") + "\""
+			}
+			b.WriteString(val)
+		}
+		b.WriteByte('\n')
+	}
+
+	// Write to /tmp with timestamp.
+	filename := fmt.Sprintf("/tmp/w9s-export-%s-%d.csv", rv.Name(), time.Now().Unix())
+	if err := os.WriteFile(filename, []byte(b.String()), 0644); err != nil {
+		rv.SetLastError(err)
+		return
+	}
+
+	// Show confirmation in a detail pane.
+	rv.modalOpen = true
+	msg := fmt.Sprintf("Exported %d rows to:\n%s\n\n%s", len(filtered), filename, b.String())
+	ui.ShowDetail(rv.Pages(), rv.App(), "export", "Export Complete", msg, func() {
+		rv.closeModal()
+	})
 }
 
 func (rv *ResourceView[T]) showDetail(row int) {
