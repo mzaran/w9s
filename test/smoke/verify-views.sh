@@ -183,6 +183,16 @@ OUT=$(capture)
 assert "Profile Delete: cancelled" "NAME\|default" "$OUT"
 
 echo ""
+echo "--- Image Import ---"
+tmux send-keys -t "$SESSION" "4"; sleep 2
+tmux send-keys -t "$SESSION" "i"; sleep 1
+OUT=$(capture)
+assert "Image Import: form appears" "Import Image\|Save\|Cancel" "$OUT"
+tmux send-keys -t "$SESSION" Escape; sleep 1
+OUT=$(capture)
+assert "Image Import: cancelled, back to table" "NAME\|Images" "$OUT"
+
+echo ""
 echo "--- Images (Tab 4) ---"
 tmux send-keys -t "$SESSION" "4"; sleep 2
 OUT=$(capture)

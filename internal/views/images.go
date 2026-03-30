@@ -6,9 +6,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 
 	"github.com/mzaran/w9s/internal/dao"
+	"github.com/mzaran/w9s/internal/ui"
 )
 
 // NewImagesView creates a ResourceView for Warewulf container images.
@@ -34,12 +36,16 @@ func NewImagesView(app *tview.Application, client dao.WarewulfClient) View {
 				return "no"
 			}},
 		},
+		OnKeyExtra: func(rv *ResourceView[*dao.WwImage], event *tcell.EventKey) *tcell.EventKey {
+			if event.Key() == tcell.KeyRune && event.Rune() == 'i' {
+				showImageImportForm(rv, client)
+				return nil
+			}
+			return event
+		},
 		Actions: []Action[*dao.WwImage]{
 			{Key: 'b', Label: "Build", Execute: func(ctx context.Context, name string, _ *dao.WwImage) error {
 				return client.Images().Build(name)
-			}},
-			{Key: 'i', Label: "Import (TODO)", Execute: func(_ context.Context, _ string, _ *dao.WwImage) error {
-				return nil // placeholder
 			}},
 			{Key: 'd', Label: "Delete", Destructive: true, Execute: func(ctx context.Context, name string, _ *dao.WwImage) error {
 				return client.Images().Delete(name)
@@ -59,6 +65,33 @@ func NewImagesView(app *tview.Application, client dao.WarewulfClient) View {
 			return b.String()
 		},
 	})
+}
+
+func showImageImportForm(rv *ResourceView[*dao.WwImage], client dao.WarewulfClient) {
+	rv.modalOpen = true
+	fields := []ui.FormField{
+		{Key: "name", Label: "Image Name", Width: 30},
+		{Key: "source", Label: "OCI Source", Default: "docker://", Width: 50},
+	}
+	ui.ShowForm(rv.Pages(), rv.App(), "image-import", rv.Name(), "Import Image", fields,
+		func(values map[string]string) {
+			name := values["name"]
+			source := values["source"]
+			if name == "" || source == "" {
+				return
+			}
+			go func() {
+				if err := client.Images().Import(name, source); err != nil {
+					rv.SetLastError(err)
+				}
+				_ = rv.Refresh()
+			}()
+		},
+		func() {
+			rv.modalOpen = false
+			rv.App().SetFocus(rv.table)
+		},
+	)
 }
 
 func humanSize(bytes int64) string {
