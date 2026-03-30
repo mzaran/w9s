@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Design B: s9s-panels — w9s Mockup</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #f0f0f0;
+    font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 30px 20px;
+    min-height: 100vh;
+  }
+  .page-title {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 24px;
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 20px;
+  }
+  .page-subtitle {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 24px;
+  }
+  .terminal-window {
+    background: #1a1a2e;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+    width: 1060px;
+    max-width: 95vw;
+  }
+  .window-title-bar {
+    background: #2a2a3e;
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    user-select: none;
+  }
+  .window-title-bar .dot { width: 12px; height: 12px; border-radius: 50%; }
+  .window-title-bar .dot.red { background: #ff5f57; }
+  .window-title-bar .dot.yellow { background: #febc2e; }
+  .window-title-bar .dot.green { background: #28c840; }
+  .window-title-bar .title {
+    flex: 1;
+    text-align: center;
+    color: #999;
+    font-size: 12px;
+    margin-right: 52px;
+  }
+  .terminal-body {
+    padding: 10px 16px 12px;
+    font-size: 13px;
+    line-height: 1.45;
+    color: #ccc;
+    min-height: 540px;
+  }
+
+  /* Top bar */
+  .top-bar {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    padding-bottom: 6px;
+    font-size: 13px;
+    white-space: nowrap;
+  }
+  .top-bar .app-name { color: #fff; font-weight: 700; }
+  .top-bar .sep { color: #555; margin: 0 10px; }
+  .top-bar .conn-dot { color: #28c840; }
+  .top-bar .conn-text { color: #ccc; }
+  .top-bar .version { color: #00bcd4; }
+  .top-bar .views { margin-left: auto; display: flex; gap: 6px; }
+  .top-bar .view-active {
+    background: #ffd700;
+    color: #000;
+    padding: 0 6px;
+    font-weight: 700;
+    border-radius: 2px;
+  }
+  .top-bar .view-inactive { color: #00bcd4; padding: 0 4px; }
+
+  /* Horizontal rule */
+  .hr {
+    color: #333;
+    font-size: 13px;
+    line-height: 1;
+    margin: 4px 0;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+
+  /* Table */
+  .node-table {
+    width: 100%;
+    font-size: 12.5px;
+    border-collapse: collapse;
+    margin: 6px 0;
+  }
+  .node-table th {
+    color: #008080;
+    font-weight: 700;
+    text-align: left;
+    padding: 3px 8px 3px 4px;
+    white-space: nowrap;
+  }
+  .node-table .header-sep td {
+    padding: 0;
+    color: #333;
+    font-size: 12px;
+    line-height: 1;
+  }
+  .node-table td {
+    padding: 2px 8px 2px 4px;
+    white-space: nowrap;
+    color: #ddd;
+  }
+  .node-table tr.selected td {
+    background: #ffd700;
+    color: #000;
+    font-weight: 400;
+  }
+  .state-ready { color: #00ff00 !important; font-weight: 700; }
+  .state-down { color: #ff4444 !important; font-weight: 700; }
+  .state-pending { color: #ffd700 !important; font-weight: 700; }
+  tr.selected .state-ready,
+  tr.selected .state-down,
+  tr.selected .state-pending { color: #000 !important; }
+
+  /* Filter box */
+  .filter-box {
+    margin: 10px 0 6px;
+    color: #555;
+    font-size: 12.5px;
+    line-height: 1.4;
+  }
+  .filter-box .top-border { color: #444; }
+  .filter-box .input-line { color: #444; }
+  .filter-box .input-line .cursor { color: #00bcd4; }
+  .filter-box .input-line .hint { color: #555; }
+  .filter-box .bottom-border { color: #444; }
+
+  /* Bottom bar */
+  .bottom-bar {
+    display: flex;
+    align-items: center;
+    font-size: 12px;
+    gap: 14px;
+    padding-top: 4px;
+    border-top: 1px solid #333;
+    margin-top: 4px;
+  }
+  .bottom-bar .key { color: #fff; }
+  .bottom-bar .action { color: #666; }
+  .bottom-bar .count { margin-left: auto; color: #555; }
+</style>
+</head>
+<body>
+  <div class="page-title">Design B: s9s-panels</div>
+  <div class="page-subtitle">Inspired by s9s — panel borders, yellow selection, filter box, structured layout</div>
+
+  <div class="terminal-window">
+    <div class="window-title-bar">
+      <div class="dot red"></div>
+      <div class="dot yellow"></div>
+      <div class="dot green"></div>
+      <div class="title">w9s &mdash; Terminal</div>
+    </div>
+    <div class="terminal-body">
+
+      <div class="top-bar">
+        <span class="app-name">W9S &mdash; Warewulf Terminal UI</span>
+        <span class="sep">&boxv;</span>
+        <span class="conn-dot">&#9679; </span><span class="conn-text">192.168.1.10:9873</span>
+        <span class="sep">&boxv;</span>
+        <span class="version">v4.6.5</span>
+        <span class="sep">&boxv;</span>
+        <div class="views">
+          <span class="view-active">[NODES]</span>
+          <span class="view-inactive">[PROFILES]</span>
+          <span class="view-inactive">[IMAGES]</span>
+          <span class="view-inactive">[OVERLAYS]</span>
+        </div>
+      </div>
+
+      <div class="hr">&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;</div>
+
+      <table class="node-table">
+        <thead>
+          <tr>
+            <th>NAME</th>
+            <th>CLUSTER</th>
+            <th>IMAGE</th>
+            <th>PROFILES</th>
+            <th>PRIMARY IP</th>
+            <th>MAC</th>
+            <th>SYS OVERLAYS</th>
+            <th>STATE</th>
+          </tr>
+          <tr class="header-sep"><td colspan="8">&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;</td></tr>
+        </thead>
+        <tbody>
+          <tr class="selected">
+            <td>compute-01</td>
+            <td>prod</td>
+            <td>rocky9</td>
+            <td>default</td>
+            <td>10.0.0.1</td>
+            <td>00:11:22:33:44:01</td>
+            <td>wwinit,generic</td>
+            <td class="state-ready">READY</td>
+          </tr>
+          <tr>
+            <td>compute-02</td>
+            <td>prod</td>
+            <td>rocky9</td>
+            <td>default</td>
+            <td>10.0.0.2</td>
+            <td>00:11:22:33:44:02</td>
+            <td>wwinit,generic</td>
+            <td class="state-ready">READY</td>
+          </tr>
+          <tr>
+            <td>compute-03</td>
+            <td>prod</td>
+            <td>rocky9</td>
+            <td>default</td>
+            <td>10.0.0.3</td>
+            <td>00:11:22:33:44:03</td>
+            <td>wwinit,generic</td>
+            <td class="state-ready">READY</td>
+          </tr>
+          <tr>
+            <td>compute-04</td>
+            <td>prod</td>
+            <td>rocky9</td>
+            <td>default</td>
+            <td>10.0.0.4</td>
+            <td>00:11:22:33:44:04</td>
+            <td>wwinit,generic</td>
+            <td class="state-down">DOWN</td>
+          </tr>
+          <tr>
+            <td>compute-05</td>
+            <td>prod</td>
+            <td>rocky9</td>
+            <td>default</td>
+            <td>10.0.0.5</td>
+            <td>00:11:22:33:44:05</td>
+            <td>wwinit,generic</td>
+            <td class="state-ready">READY</td>
+          </tr>
+          <tr>
+            <td>compute-06</td>
+            <td>prod</td>
+            <td>rocky9</td>
+            <td>default</td>
+            <td>10.0.0.6</td>
+            <td>00:11:22:33:44:06</td>
+            <td>wwinit,generic</td>
+            <td class="state-ready">READY</td>
+          </tr>
+          <tr>
+            <td>compute-07</td>
+            <td>prod</td>
+            <td>rocky9</td>
+            <td>default</td>
+            <td>10.0.0.7</td>
+            <td>00:11:22:33:44:07</td>
+            <td>wwinit,generic</td>
+            <td class="state-ready">READY</td>
+          </tr>
+          <tr>
+            <td>compute-08</td>
+            <td>prod</td>
+            <td>rocky9</td>
+            <td>default</td>
+            <td>10.0.0.8</td>
+            <td>00:11:22:33:44:08</td>
+            <td>wwinit,generic</td>
+            <td class="state-ready">READY</td>
+          </tr>
+          <tr>
+            <td>gpu-01</td>
+            <td>prod</td>
+            <td>rocky9-cuda</td>
+            <td>gpu</td>
+            <td>10.0.0.9</td>
+            <td>00:11:22:33:44:09</td>
+            <td>wwinit,generic</td>
+            <td class="state-ready">READY</td>
+          </tr>
+          <tr>
+            <td>gpu-02</td>
+            <td>prod</td>
+            <td>rocky9-cuda</td>
+            <td>gpu</td>
+            <td>10.0.0.10</td>
+            <td>00:11:22:33:44:10</td>
+            <td>wwinit,generic</td>
+            <td class="state-pending">PENDING</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="filter-box">
+        <div class="top-border">&#9484;&#9472;&#9472; Filter &#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9488;</div>
+        <div class="input-line">&#9474; <span class="cursor">&gt; </span><span style="color:#1a1a2e;">_</span><span class="hint" style="margin-left:20px;">e.g. cluster=prod image=rocky9</span><span style="float:right;">&#9474;</span></div>
+        <div class="bottom-border">&#9492;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9496;</div>
+      </div>
+
+      <div class="bottom-bar">
+        <span><span class="key">d</span><span class="action">:Delete</span></span>
+        <span><span class="key">b</span><span class="action">:Build</span></span>
+        <span><span class="key">e</span><span class="action">:Edit</span></span>
+        <span><span class="key">/</span><span class="action">:Filter</span></span>
+        <span><span class="key">Enter</span><span class="action">:Detail</span></span>
+        <span><span class="key">Tab</span><span class="action">:Next</span></span>
+        <span><span class="key">q</span><span class="action">:Quit</span></span>
+        <span class="count">10 nodes</span>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

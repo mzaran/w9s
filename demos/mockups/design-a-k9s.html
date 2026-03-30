@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Design A: k9s-minimal — w9s Mockup</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #f0f0f0;
+    font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 30px 20px;
+    min-height: 100vh;
+  }
+  .page-title {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 24px;
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 20px;
+  }
+  .page-subtitle {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 24px;
+  }
+  .terminal-window {
+    background: #0a0a0a;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+    width: 1060px;
+    max-width: 95vw;
+  }
+  .title-bar {
+    background: #2a2a2a;
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    user-select: none;
+  }
+  .title-bar .dot { width: 12px; height: 12px; border-radius: 50%; }
+  .title-bar .dot.red { background: #ff5f57; }
+  .title-bar .dot.yellow { background: #febc2e; }
+  .title-bar .dot.green { background: #28c840; }
+  .title-bar .title {
+    flex: 1;
+    text-align: center;
+    color: #999;
+    font-size: 12px;
+    margin-right: 52px;
+  }
+  .terminal-body {
+    padding: 12px 16px;
+    font-size: 13px;
+    line-height: 1.45;
+    color: #ccc;
+    min-height: 520px;
+  }
+  /* Header area */
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 8px;
+  }
+  .logo { color: #ff8c00; white-space: pre; font-size: 13px; line-height: 1.2; }
+  .cluster-info { text-align: right; font-size: 13px; line-height: 1.6; }
+  .cluster-info .label { color: #888; }
+  .cluster-info .value { color: #fff; }
+  .cluster-info .url { color: #1e90ff; }
+  .metrics { margin-top: 4px; }
+  .metrics .num-green { color: #00ff00; }
+  .metrics .num-white { color: #fff; }
+  .metrics .num-blue { color: #00ffff; }
+  .metrics .sep { color: #888; }
+
+  /* Breadcrumbs */
+  .breadcrumbs {
+    margin: 6px 0 10px 0;
+    font-size: 13px;
+  }
+  .breadcrumbs .active {
+    background: #4682b4;
+    color: #fff;
+    padding: 1px 8px;
+    border-radius: 2px;
+  }
+  .breadcrumbs .inactive { color: #1e90ff; margin: 0 6px; }
+
+  /* Table */
+  .node-table {
+    width: 100%;
+    font-size: 12.5px;
+    border-collapse: collapse;
+    margin: 4px 0;
+  }
+  .node-table th {
+    color: #fff;
+    font-weight: 700;
+    text-align: left;
+    padding: 3px 8px 3px 4px;
+    white-space: nowrap;
+  }
+  .node-table td {
+    padding: 2px 8px 2px 4px;
+    white-space: nowrap;
+    color: #1e90ff;
+  }
+  .node-table tr.selected td {
+    background: #00ffff;
+    color: #000;
+    font-weight: 400;
+  }
+  .node-table .prefix { width: 16px; text-align: center; }
+  .status-ready { color: #00ff00 !important; }
+  .status-down { color: #ff4444 !important; }
+  .status-pending { color: #ffd700 !important; }
+  tr.selected .status-ready,
+  tr.selected .status-down,
+  tr.selected .status-pending { font-weight: 700; }
+
+  /* Bottom bar */
+  .bottom-bar {
+    margin-top: 12px;
+    padding-top: 6px;
+    border-top: 1px solid #222;
+    font-size: 12px;
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .bottom-bar .key { color: #1e90ff; font-weight: 700; }
+  .bottom-bar .desc { color: #666; }
+</style>
+</head>
+<body>
+  <div class="page-title">Design A: k9s-minimal</div>
+  <div class="page-subtitle">Inspired by k9s — clean, borderless table, ASCII logo, colored status dots</div>
+
+  <div class="terminal-window">
+    <div class="title-bar">
+      <div class="dot red"></div>
+      <div class="dot yellow"></div>
+      <div class="dot green"></div>
+      <div class="title">w9s &mdash; Terminal</div>
+    </div>
+    <div class="terminal-body">
+      <div class="header">
+        <pre class="logo"> __    __ ___  ___
+ \ \  / // _ \/ __|
+  \ \/ /| (_) \__ \
+   \_/  \___/|___/</pre>
+        <div class="cluster-info">
+          <span class="label">Cluster: </span><span class="value">rocky9-warewulf</span><br>
+          <span class="label">Server: </span><span class="url">192.168.1.10:9873</span><br>
+          <span class="label">Version: </span><span class="value">4.6.5</span><br>
+          <div class="metrics">
+            <span class="label">Nodes: </span><span class="num-green">8</span><span class="num-white">/10</span>
+            <span class="sep"> │ </span>
+            <span class="label">Images: </span><span class="num-blue">2</span>
+            <span class="sep"> │ </span>
+            <span class="label">Profiles: </span><span class="num-blue">2</span>
+            <span class="sep"> │ </span>
+            <span class="label">Overlays: </span><span class="num-blue">14</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="breadcrumbs">
+        <span class="inactive">dashboard</span>
+        <span class="active">&lt; nodes &gt;</span>
+        <span class="inactive">profiles</span>
+        <span class="inactive">images</span>
+        <span class="inactive">overlays</span>
+      </div>
+
+      <table class="node-table">
+        <thead>
+          <tr>
+            <th class="prefix"></th>
+            <th>NAME</th>
+            <th>CLUSTER</th>
+            <th>IMAGE</th>
+            <th>PROFILES</th>
+            <th>PRIMARY IP</th>
+            <th>MAC</th>
+            <th>SYS OVERLAYS</th>
+            <th>STATUS</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="selected">
+            <td class="prefix">&#9658;</td>
+            <td>compute-01</td>
+            <td>prod</td>
+            <td>rocky9</td>
+            <td>default</td>
+            <td>10.0.0.1</td>
+            <td>00:11:22:33:44:01</td>
+            <td>wwinit,generic</td>
+            <td class="status-ready">&#9679; Ready</td>
+          </tr>
+          <tr>
+            <td class="prefix"></td>
+            <td>compute-02</td>
+            <td>prod</td>
+            <td>rocky9</td>
+            <td>default</td>
+            <td>10.0.0.2</td>
+            <td>00:11:22:33:44:02</td>
+            <td>wwinit,generic</td>
+            <td class="status-ready">&#9679; Ready</td>
+          </tr>
+          <tr>
+            <td class="prefix"></td>
+            <td>compute-03</td>
+            <td>prod</td>
+            <td>rocky9</td>
+            <td>default</td>
+            <td>10.0.0.3</td>
+            <td>00:11:22:33:44:03</td>
+            <td>wwinit,generic</td>
+            <td class="status-ready">&#9679; Ready</td>
+          </tr>
+          <tr>
+            <td class="prefix"></td>
+            <td>compute-04</td>
+            <td>prod</td>
+            <td>rocky9</td>
+            <td>default</td>
+            <td>10.0.0.4</td>
+            <td>00:11:22:33:44:04</td>
+            <td>wwinit,generic</td>
+            <td class="status-down">&#9679; Down</td>
+          </tr>
+          <tr>
+            <td class="prefix"></td>
+            <td>compute-05</td>
+            <td>prod</td>
+            <td>rocky9</td>
+            <td>default</td>
+            <td>10.0.0.5</td>
+            <td>00:11:22:33:44:05</td>
+            <td>wwinit,generic</td>
+            <td class="status-ready">&#9679; Ready</td>
+          </tr>
+          <tr>
+            <td class="prefix"></td>
+            <td>compute-06</td>
+            <td>prod</td>
+            <td>rocky9</td>
+            <td>default</td>
+            <td>10.0.0.6</td>
+            <td>00:11:22:33:44:06</td>
+            <td>wwinit,generic</td>
+            <td class="status-ready">&#9679; Ready</td>
+          </tr>
+          <tr>
+            <td class="prefix"></td>
+            <td>compute-07</td>
+            <td>prod</td>
+            <td>rocky9</td>
+            <td>default</td>
+            <td>10.0.0.7</td>
+            <td>00:11:22:33:44:07</td>
+            <td>wwinit,generic</td>
+            <td class="status-ready">&#9679; Ready</td>
+          </tr>
+          <tr>
+            <td class="prefix"></td>
+            <td>compute-08</td>
+            <td>prod</td>
+            <td>rocky9</td>
+            <td>default</td>
+            <td>10.0.0.8</td>
+            <td>00:11:22:33:44:08</td>
+            <td>wwinit,generic</td>
+            <td class="status-ready">&#9679; Ready</td>
+          </tr>
+          <tr>
+            <td class="prefix"></td>
+            <td>gpu-01</td>
+            <td>prod</td>
+            <td>rocky9-cuda</td>
+            <td>gpu</td>
+            <td>10.0.0.9</td>
+            <td>00:11:22:33:44:09</td>
+            <td>wwinit,generic</td>
+            <td class="status-ready">&#9679; Ready</td>
+          </tr>
+          <tr>
+            <td class="prefix"></td>
+            <td>gpu-02</td>
+            <td>prod</td>
+            <td>rocky9-cuda</td>
+            <td>gpu</td>
+            <td>10.0.0.10</td>
+            <td>00:11:22:33:44:10</td>
+            <td>wwinit,generic</td>
+            <td class="status-pending">&#9679; Pending</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="bottom-bar">
+        <span><span class="key">&lt;d&gt;</span><span class="desc">elete</span></span>
+        <span><span class="key">&lt;b&gt;</span><span class="desc">uild overlays</span></span>
+        <span><span class="key">&lt;e&gt;</span><span class="desc">dit</span></span>
+        <span><span class="key">&lt;/&gt;</span><span class="desc">filter</span></span>
+        <span><span class="key">&lt;enter&gt;</span><span class="desc">detail</span></span>
+        <span><span class="key">&lt;q&gt;</span><span class="desc">uit</span></span>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
