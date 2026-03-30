@@ -66,7 +66,7 @@ OUT=$(capture)
 assert "Nodes: table has NAME column" "NAME" "$OUT"
 assert "Nodes: has IP data" "192.168\|10\.0\." "$OUT"
 assert "Nodes: has MAC data" "00:11:22\|44:" "$OUT"
-assert "Nodes: has Status" "Ready\|Pending" "$OUT"
+assert "Nodes: has Status" "Built\|Stale\|Ready\|No Image" "$OUT"
 
 echo ""
 echo "--- Node Add Form ---"

@@ -27,10 +27,7 @@ func NewNodesView(app *tview.Application, client dao.WarewulfClient) View {
 			{Name: "MAC", Width: 18, Extract: func(_ string, n *dao.WwNode) string { return primaryMAC(n) }},
 			{Name: "Overlays", Width: 20, Extract: func(_ string, n *dao.WwNode) string { return strings.Join(n.SystemOverlay, ",") }},
 			{Name: "Status", Width: 12, Extract: func(_ string, n *dao.WwNode) string {
-				if n.ImageName != "" && len(n.Profiles) > 0 {
-					return "● Ready"
-				}
-				return "● Pending"
+				return nodeStatus(n)
 			}},
 		},
 		ExtraHints: []string{"a Add", "e Edit"},
@@ -99,6 +96,16 @@ func primaryMAC(n *dao.WwNode) string {
 		return nd.Hwaddr
 	}
 	return ""
+}
+
+func nodeStatus(n *dao.WwNode) string {
+	if n.ImageName == "" {
+		return "● No Image"
+	}
+	if len(n.SystemOverlay) > 0 || len(n.RuntimeOverlay) > 0 {
+		return "● Built"
+	}
+	return "● Ready"
 }
 
 func showNodeAddForm(rv *ResourceView[*dao.WwNode], client dao.WarewulfClient) {
