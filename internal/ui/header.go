@@ -38,12 +38,12 @@ func NewHeader(theme *Theme) *Header {
 	h.tabs.SetBorder(false)
 
 	topRow := tview.NewFlex().SetDirection(tview.FlexColumn).
-		AddItem(h.logo, 14, 0, false).
+		AddItem(h.logo, 10, 0, false).
 		AddItem(h.info, 0, 1, false)
 	topRow.SetBackgroundColor(theme.BgColor)
 	topRow.SetBorder(false)
 
-	h.Flex.AddItem(topRow, 3, 0, false).
+	h.Flex.AddItem(topRow, 1, 0, false).
 		AddItem(h.tabs, 1, 0, false)
 	h.SetBackgroundColor(theme.BgColor)
 	h.SetBorder(false)
@@ -70,12 +70,10 @@ func (h *Header) renderInfo(nodes, up, images, profiles, overlays int) {
 	val := ColorToHex(h.theme.MetricValue)
 	lbl := ColorToHex(h.theme.MetricLabel)
 
-	fmt.Fprintf(h.info, "[white::b]Warewulf Cluster Manager[-:-:-]")
-	fmt.Fprintf(h.info, "       [#%06x]● Connected[-]  [white]%s[-]      [#%06x]%s[-]\n",
+	fmt.Fprintf(h.info, "[#%06x]● Connected[-]  [white]%s[-]  [#%06x]%s[-]",
 		conn, h.endpoint, dim, h.version)
-	fmt.Fprintf(h.info, "[#%06x]w9s.sh[-]", dim)
 	if nodes > 0 || images > 0 || profiles > 0 {
-		fmt.Fprintf(h.info, "                          [#%06x]Nodes:[-] [#%06x]%d[-][#%06x]/%d[-]",
+		fmt.Fprintf(h.info, "    [#%06x]Nodes:[-] [#%06x]%d[-][#%06x]/%d[-]",
 			lbl, val, up, lbl, nodes)
 		fmt.Fprintf(h.info, "  [#%06x]Images:[-] [#%06x]%d[-]", lbl, val, images)
 		fmt.Fprintf(h.info, "  [#%06x]Profiles:[-] [#%06x]%d[-]", lbl, val, profiles)

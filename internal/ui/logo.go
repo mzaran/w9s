@@ -6,14 +6,7 @@ import (
 	"github.com/rivo/tview"
 )
 
-// LogoLines contains the 3-line block-letter W9S logo.
-var LogoLines = []string{
-	" ╦ ╦╔═╗╔═╗",
-	" ║║║╠═╣╚═╗",
-	" ╚╩╝╩ ╩╚═╝",
-}
-
-// NewLogo creates a tview.TextView rendering the W9S logo in theme colors.
+// NewLogo creates a simple "w9s.sh" text brand in theme colors.
 func NewLogo(theme *Theme) *tview.TextView {
 	tv := tview.NewTextView().
 		SetDynamicColors(true).
@@ -21,8 +14,6 @@ func NewLogo(theme *Theme) *tview.TextView {
 	tv.SetBackgroundColor(theme.BgColor)
 	tv.SetBorder(false)
 	hex := ColorToHex(theme.LogoColor)
-	for _, line := range LogoLines {
-		fmt.Fprintf(tv, "[#%06x::b]%s[-:-:-]\n", hex, line)
-	}
+	fmt.Fprintf(tv, "[#%06x::b] w9s.sh[-:-:-]", hex)
 	return tv
 }

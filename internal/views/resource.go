@@ -50,7 +50,14 @@ type ResourceView[T any] struct {
 	container   *tview.Flex
 	filterInput *tview.InputField
 	filterQuery string
+	filtering   bool
+	modalOpen   bool
 	selectedRow int
+}
+
+// IsFiltering reports whether the filter input or a modal is currently active.
+func (rv *ResourceView[T]) IsFiltering() bool {
+	return rv.filtering || rv.modalOpen
 }
 
 // NewResourceView creates a new ResourceView with the given configuration.
@@ -76,24 +83,12 @@ func (rv *ResourceView[T]) Init(ctx context.Context) error {
 		SetSeparator(tview.Borders.Vertical)
 	rv.table.SetBorder(false)
 
-	rv.table.SetSelectedFunc(func(row, _ int) {
-		rv.showDetail(row)
-	})
+	// Note: Enter is handled in OnKey, not SetSelectedFunc,
+	// to avoid re-entrancy when focus returns to the table after a modal closes.
 
 	rv.filterInput = tview.NewInputField().
 		SetLabel(" Filter: ").
-		SetFieldWidth(0).
-		SetDoneFunc(func(key tcell.Key) {
-			switch key {
-			case tcell.KeyEscape:
-				rv.filterQuery = ""
-				rv.filterInput.SetText("")
-			case tcell.KeyEnter:
-				rv.filterQuery = rv.filterInput.GetText()
-			}
-			rv.renderTable()
-			rv.App().SetFocus(rv.table)
-		})
+		SetFieldWidth(0)
 	rv.filterInput.SetChangedFunc(func(text string) {
 		rv.filterQuery = text
 		rv.renderTable()
@@ -101,7 +96,7 @@ func (rv *ResourceView[T]) Init(ctx context.Context) error {
 
 	rv.container = tview.NewFlex().SetDirection(tview.FlexRow).
 		AddItem(rv.table, 0, 1, true).
-		AddItem(rv.filterInput, 1, 0, false)
+		AddItem(rv.filterInput, 0, 0, false) // hidden by default; shown when / pressed
 
 	return nil
 }
@@ -173,11 +168,42 @@ func (rv *ResourceView[T]) Refresh() error {
 
 // OnKey handles key events for the resource view.
 func (rv *ResourceView[T]) OnKey(event *tcell.EventKey) *tcell.EventKey {
+	// When a modal is open, let tview handle it. Escape closes the modal.
+	if rv.modalOpen {
+		if event.Key() == tcell.KeyEscape {
+			rv.closeModal()
+			return nil
+		}
+		return event
+	}
+
+	// When filtering, only handle Escape and Enter here.
+	// All other keys pass through to the focused filterInput.
+	if rv.filtering {
+		switch event.Key() {
+		case tcell.KeyEscape:
+			rv.filterQuery = ""
+			rv.filterInput.SetText("")
+			rv.hideFilter()
+			return nil
+		case tcell.KeyEnter:
+			rv.filterQuery = rv.filterInput.GetText()
+			rv.hideFilter()
+			return nil
+		}
+		return event // let tview route to filterInput
+	}
+
+	// Normal (non-filter) mode.
 	switch event.Key() {
+	case tcell.KeyEnter:
+		row, _ := rv.table.GetSelection()
+		rv.showDetail(row)
+		return nil
 	case tcell.KeyRune:
 		switch event.Rune() {
 		case '/':
-			rv.App().SetFocus(rv.filterInput)
+			rv.showFilter()
 			return nil
 		case 'r':
 			_ = rv.Refresh()
@@ -207,6 +233,19 @@ func (rv *ResourceView[T]) OnFocus() error {
 	return rv.Refresh()
 }
 
+func (rv *ResourceView[T]) showFilter() {
+	rv.filtering = true
+	rv.container.ResizeItem(rv.filterInput, 1, 0)
+	rv.App().SetFocus(rv.filterInput)
+}
+
+func (rv *ResourceView[T]) hideFilter() {
+	rv.filtering = false
+	rv.container.ResizeItem(rv.filterInput, 0, 0)
+	rv.renderTable()
+	rv.App().SetFocus(rv.table)
+}
+
 func (rv *ResourceView[T]) handleAction(event *tcell.EventKey) *tcell.EventKey {
 	ch := event.Rune()
 	for _, action := range rv.config.Actions {
@@ -219,6 +258,7 @@ func (rv *ResourceView[T]) handleAction(event *tcell.EventKey) *tcell.EventKey {
 		}
 		if action.Destructive {
 			act := action // capture
+			rv.modalOpen = true
 			ui.ShowConfirm(rv.App(), rv.Pages(), act.Label,
 				fmt.Sprintf("Are you sure you want to %s '%s'?", strings.ToLower(act.Label), name),
 				func() {
@@ -229,6 +269,7 @@ func (rv *ResourceView[T]) handleAction(event *tcell.EventKey) *tcell.EventKey {
 						_ = rv.Refresh()
 					}()
 				},
+				func() { rv.modalOpen = false }, // onDone: always clear modal state
 			)
 		} else {
 			go func() {
@@ -345,14 +386,17 @@ func (rv *ResourceView[T]) showDetail(row int) {
 
 	text := rv.config.Detail(key, item)
 
-	modal := tview.NewModal().
-		SetText(text).
-		AddButtons([]string{"Close"}).
-		SetDoneFunc(func(_ int, _ string) {
-			rv.Pages().RemovePage("detail")
-			rv.App().SetFocus(rv.table)
-		})
-	rv.Pages().AddAndSwitchToPage("detail", modal, true)
+	rv.modalOpen = true
+	ui.ShowDetail(rv.Pages(), rv.App(), "detail", key, text, func() {
+		rv.closeModal()
+	})
+}
+
+func (rv *ResourceView[T]) closeModal() {
+	rv.modalOpen = false
+	rv.Pages().RemovePage("detail")
+	rv.Pages().SwitchToPage(rv.Name())
+	rv.App().SetFocus(rv.table)
 }
 
 func sortKeys[T any](m map[string]T) []string {

@@ -80,7 +80,7 @@ func (a *App) Context() context.Context {
 func (a *App) initUI() {
 	theme := &ui.DefaultTheme
 
-	// Header: logo (3 rows) + tabs (1 row) = 4 rows.
+	// Header: info (1 row) + tabs (1 row) = 2 rows.
 	a.header = ui.NewHeader(theme)
 
 	// Content pages.
@@ -97,7 +97,7 @@ func (a *App) initUI() {
 
 	// Main layout: vertical flex.
 	mainLayout := tview.NewFlex().SetDirection(tview.FlexRow).
-		AddItem(a.header, 4, 0, false).
+		AddItem(a.header, 2, 0, false).
 		AddItem(a.pages, 0, 1, true).
 		AddItem(a.statusBar, 1, 0, false)
 

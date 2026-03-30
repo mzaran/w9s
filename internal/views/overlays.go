@@ -11,6 +11,7 @@ import (
 	"github.com/rivo/tview"
 
 	"github.com/mzaran/w9s/internal/dao"
+	"github.com/mzaran/w9s/internal/ui"
 )
 
 const (
@@ -31,6 +32,7 @@ type OverlaysView struct {
 	table           *tview.Table
 	container       *tview.Flex
 	breadcrumb      *tview.TextView
+	modalOpen       bool
 }
 
 // NewOverlaysView creates a new overlays view.
@@ -54,9 +56,7 @@ func (ov *OverlaysView) Init(ctx context.Context) error {
 		SetFixed(1, 0).
 		SetSeparator(tview.Borders.Vertical)
 	ov.table.SetBorder(false)
-	ov.table.SetSelectedFunc(func(row, _ int) {
-		ov.onEnter(row)
-	})
+	// Enter is handled in OnKey to avoid re-entrancy on focus restore.
 
 	ov.breadcrumb = tview.NewTextView().
 		SetDynamicColors(true).
@@ -80,8 +80,29 @@ func (ov *OverlaysView) Hints() []string {
 	return []string{"Enter Browse Files", "r Refresh"}
 }
 
+// IsFiltering reports whether a modal is open (implements Filterable).
+func (ov *OverlaysView) IsFiltering() bool {
+	return ov.modalOpen
+}
+
 func (ov *OverlaysView) OnKey(event *tcell.EventKey) *tcell.EventKey {
+	// When file content modal is open
+	if ov.modalOpen {
+		if event.Key() == tcell.KeyEscape || event.Key() == tcell.KeyEnter {
+			ov.modalOpen = false
+			ov.Pages().RemovePage("filecontent")
+			ov.Pages().SwitchToPage(ov.Name())
+			ov.App().SetFocus(ov.table)
+			return nil
+		}
+		return event
+	}
+
 	switch event.Key() {
+	case tcell.KeyEnter:
+		row, _ := ov.table.GetSelection()
+		ov.onEnter(row)
+		return nil
 	case tcell.KeyEscape:
 		if ov.mode == overlayModeFiles {
 			ov.mode = overlayModeList
@@ -277,15 +298,13 @@ func (ov *OverlaysView) showFileContent(overlay, path string) {
 			content := file.Contents
 			title := fmt.Sprintf("%s: %s", overlay, path)
 
-			modal := tview.NewModal().
-				SetText(content).
-				AddButtons([]string{"Close"}).
-				SetDoneFunc(func(_ int, _ string) {
-					ov.Pages().RemovePage("filecontent")
-					ov.App().SetFocus(ov.table)
-				})
-			modal.SetTitle(title)
-			ov.Pages().AddAndSwitchToPage("filecontent", modal, true)
+			ov.modalOpen = true
+			ui.ShowDetail(ov.Pages(), ov.App(), "filecontent", title, content, func() {
+				ov.modalOpen = false
+				ov.Pages().RemovePage("filecontent")
+				ov.Pages().SwitchToPage(ov.Name())
+				ov.App().SetFocus(ov.table)
+			})
 		})
 	}()
 }

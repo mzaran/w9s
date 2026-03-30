@@ -11,6 +11,7 @@ import (
 	"github.com/rivo/tview"
 
 	"github.com/mzaran/w9s/internal/dao"
+	"github.com/mzaran/w9s/internal/ui"
 )
 
 // ProfilesView displays profiles with an inheritance tree panel.
@@ -24,6 +25,7 @@ type ProfilesView struct {
 	table     *tview.Table
 	tree      *tview.TreeView
 	container *tview.Flex
+	modalOpen bool
 }
 
 // NewProfilesView creates a new profiles view.
@@ -72,12 +74,70 @@ func (pv *ProfilesView) Hints() []string {
 	return []string{"r Refresh", "Enter Detail", "/ Filter"}
 }
 
+// IsFiltering reports whether a modal is open (implements Filterable).
+func (pv *ProfilesView) IsFiltering() bool {
+	return pv.modalOpen
+}
+
 func (pv *ProfilesView) OnKey(event *tcell.EventKey) *tcell.EventKey {
-	if event.Key() == tcell.KeyRune && event.Rune() == 'r' {
-		_ = pv.Refresh()
+	if pv.modalOpen {
+		if event.Key() == tcell.KeyEscape || event.Key() == tcell.KeyEnter {
+			pv.modalOpen = false
+			pv.Pages().RemovePage("profile-detail")
+			pv.Pages().SwitchToPage(pv.Name())
+			pv.App().SetFocus(pv.table)
+			return nil
+		}
+		return event
+	}
+
+	switch event.Key() {
+	case tcell.KeyEnter:
+		pv.showDetail()
 		return nil
+	case tcell.KeyRune:
+		if event.Rune() == 'r' {
+			_ = pv.Refresh()
+			return nil
+		}
 	}
 	return event
+}
+
+func (pv *ProfilesView) showDetail() {
+	pv.mu.RLock()
+	row, _ := pv.table.GetSelection()
+	idx := row - 1
+	if idx < 0 || idx >= len(pv.sorted) {
+		pv.mu.RUnlock()
+		return
+	}
+	name := pv.sorted[idx]
+	p := pv.profiles[name]
+	pv.mu.RUnlock()
+
+	var b strings.Builder
+	fmt.Fprintf(&b, "Profile: %s\n", name)
+	fmt.Fprintf(&b, "Comment: %s\n", p.Comment)
+	fmt.Fprintf(&b, "Cluster: %s\n", p.ClusterName)
+	fmt.Fprintf(&b, "Image: %s\n", p.ImageName)
+	fmt.Fprintf(&b, "Parent Profiles: %s\n", strings.Join(p.Profiles, ", "))
+	fmt.Fprintf(&b, "System Overlays: %s\n", strings.Join(p.SystemOverlay, ", "))
+	fmt.Fprintf(&b, "Runtime Overlays: %s\n", strings.Join(p.RuntimeOverlay, ", "))
+	if p.Kernel != nil {
+		fmt.Fprintf(&b, "Kernel: %s\n", p.Kernel.Version)
+		fmt.Fprintf(&b, "Kernel Args: %s\n", strings.Join(p.Kernel.Args, " "))
+	}
+	fmt.Fprintf(&b, "Init: %s\n", p.Init)
+	fmt.Fprintf(&b, "Root: %s\n", p.Root)
+
+	pv.modalOpen = true
+	ui.ShowDetail(pv.Pages(), pv.App(), "profile-detail", name, b.String(), func() {
+		pv.modalOpen = false
+		pv.Pages().RemovePage("profile-detail")
+		pv.Pages().SwitchToPage(pv.Name())
+		pv.App().SetFocus(pv.table)
+	})
 }
 
 func (pv *ProfilesView) OnFocus() error {

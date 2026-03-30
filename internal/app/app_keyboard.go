@@ -7,6 +7,11 @@ func (a *App) setupKeyboard() {
 	a.tviewApp.SetInputCapture(a.inputCapture)
 }
 
+// Filterable is implemented by views that support filter mode.
+type Filterable interface {
+	IsFiltering() bool
+}
+
 // inputCapture handles global keyboard shortcuts and delegates
 // unhandled keys to the current view.
 func (a *App) inputCapture(event *tcell.EventKey) *tcell.EventKey {
@@ -15,6 +20,11 @@ func (a *App) inputCapture(event *tcell.EventKey) *tcell.EventKey {
 		result := v.OnKey(event)
 		if result == nil {
 			return nil // consumed by view
+		}
+		// If the view is filtering, skip global shortcuts so keystrokes
+		// reach the filter input (e.g., don't let 'q' quit the app).
+		if f, ok := v.(Filterable); ok && f.IsFiltering() {
+			return event
 		}
 	}
 
