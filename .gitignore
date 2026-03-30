@@ -3,7 +3,7 @@ build/
 dist/
 
 # Binaries
-w9s
+/w9s
 *.exe
 *.exe~
 *.dll
