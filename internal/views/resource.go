@@ -53,6 +53,8 @@ type ResourceView[T any] struct {
 	filtering   bool
 	modalOpen   bool
 	selectedRow int
+	sortCol     int  // -1 = default (by key name), 0..N = column index
+	sortAsc     bool // true = ascending, false = descending
 }
 
 // IsFiltering reports whether the filter input or a modal is currently active.
@@ -65,6 +67,8 @@ func NewResourceView[T any](name, title string, app *tview.Application, cfg Reso
 	rv := &ResourceView[T]{
 		BaseView: NewBaseView(name, title),
 		config:   cfg,
+		sortCol:  -1,
+		sortAsc:  true,
 		// items left nil — first Refresh() will do a synchronous load
 	}
 	rv.SetApp(app)
@@ -110,6 +114,8 @@ func (rv *ResourceView[T]) Render() tview.Primitive {
 func (rv *ResourceView[T]) Hints() []string {
 	hints := []string{
 		"/ Filter",
+		"s Sort",
+		"S Reverse",
 		"Enter Detail",
 		"r Refresh",
 	}
@@ -208,10 +214,22 @@ func (rv *ResourceView[T]) OnKey(event *tcell.EventKey) *tcell.EventKey {
 		case 'r':
 			_ = rv.Refresh()
 			return nil
+		case 's':
+			rv.nextSortColumn()
+			return nil
+		case 'S':
+			rv.toggleSortDirection()
+			return nil
 		default:
 			return rv.handleAction(event)
 		}
 	case tcell.KeyEscape:
+		if rv.sortCol >= 0 {
+			rv.sortCol = -1
+			rv.sortAsc = true
+			rv.renderTable()
+			return nil
+		}
 		if rv.filterQuery != "" {
 			rv.filterQuery = ""
 			rv.filterInput.SetText("")
@@ -306,9 +324,17 @@ func (rv *ResourceView[T]) renderTable() {
 
 	rv.table.Clear()
 
-	// Header row.
+	// Header row with sort indicator.
 	for col, c := range rv.config.Columns {
-		cell := tview.NewTableCell(strings.ToUpper(c.Name)).
+		header := strings.ToUpper(c.Name)
+		if col == rv.sortCol {
+			if rv.sortAsc {
+				header += " ▲"
+			} else {
+				header += " ▼"
+			}
+		}
+		cell := tview.NewTableCell(header).
 			SetSelectable(false).
 			SetExpansion(1).
 			SetTextColor(tcell.ColorYellow).
@@ -345,28 +371,61 @@ func (rv *ResourceView[T]) renderTable() {
 }
 
 func (rv *ResourceView[T]) filteredKeys() []string {
+	var keys []string
 	if rv.filterQuery == "" {
-		return rv.sortedKeys
-	}
-	var result []string
-	query := strings.ToLower(rv.filterQuery)
-	for _, key := range rv.sortedKeys {
-		item := rv.items[key]
-		if rv.config.Filter != nil {
-			if rv.config.Filter(key, item, query) {
-				result = append(result, key)
-			}
-		} else {
-			// Default: substring match on any column value.
-			for _, c := range rv.config.Columns {
-				if strings.Contains(strings.ToLower(c.Extract(key, item)), query) {
-					result = append(result, key)
-					break
+		keys = make([]string, len(rv.sortedKeys))
+		copy(keys, rv.sortedKeys)
+	} else {
+		query := strings.ToLower(rv.filterQuery)
+		for _, key := range rv.sortedKeys {
+			item := rv.items[key]
+			if rv.config.Filter != nil {
+				if rv.config.Filter(key, item, query) {
+					keys = append(keys, key)
+				}
+			} else {
+				for _, c := range rv.config.Columns {
+					if strings.Contains(strings.ToLower(c.Extract(key, item)), query) {
+						keys = append(keys, key)
+						break
+					}
 				}
 			}
 		}
 	}
-	return result
+
+	// Apply column sort if active.
+	if rv.sortCol >= 0 && rv.sortCol < len(rv.config.Columns) {
+		col := rv.config.Columns[rv.sortCol]
+		asc := rv.sortAsc
+		sort.SliceStable(keys, func(i, j int) bool {
+			vi := col.Extract(keys[i], rv.items[keys[i]])
+			vj := col.Extract(keys[j], rv.items[keys[j]])
+			if asc {
+				return vi < vj
+			}
+			return vi > vj
+		})
+	}
+
+	return keys
+}
+
+func (rv *ResourceView[T]) nextSortColumn() {
+	rv.sortCol++
+	if rv.sortCol >= len(rv.config.Columns) {
+		rv.sortCol = 0
+	}
+	rv.sortAsc = true
+	rv.renderTable()
+}
+
+func (rv *ResourceView[T]) toggleSortDirection() {
+	if rv.sortCol < 0 {
+		rv.sortCol = 0
+	}
+	rv.sortAsc = !rv.sortAsc
+	rv.renderTable()
 }
 
 func (rv *ResourceView[T]) showDetail(row int) {

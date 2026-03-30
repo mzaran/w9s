@@ -69,6 +69,21 @@ assert "Nodes: has MAC data" "00:11:22\|44:" "$OUT"
 assert "Nodes: has Status" "Ready\|Pending" "$OUT"
 
 echo ""
+echo "--- Column Sort ---"
+# s should sort by next column, header should show sort indicator
+tmux send-keys -t "$SESSION" "s"; sleep 1
+OUT=$(capture)
+assert "Sort: sort indicator shown" "▲\|▼\|↑\|↓\|▴\|▾" "$OUT"
+# S (shift+s) should reverse sort
+tmux send-keys -t "$SESSION" "S"; sleep 1
+OUT=$(capture)
+assert "Sort: reverse indicator" "▼\|↓\|▾" "$OUT"
+# Escape resets sort
+tmux send-keys -t "$SESSION" Escape; sleep 1
+OUT=$(capture)
+assert "Sort: back to default (NAME first)" "NAME" "$OUT"
+
+echo ""
 echo "--- Detail Pane ---"
 tmux send-keys -t "$SESSION" Enter; sleep 1
 OUT=$(capture)
