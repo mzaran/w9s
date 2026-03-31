@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
 # Automated w9s demo capture — records mock mode with scripted navigation.
-# No manual interaction needed.
+# Showcases: Dashboard, Nodes (sort, filter, detail, export), Profiles,
+# Images, Overlays (drill-down), Cluster Switcher, Help.
 #
 # Usage: ./demos/auto-capture.sh
 # Output: demos/w9s-auto.cast → docs/screenshots/w9s-demo.gif
 #
-# Requires: asciinema, agg, expect (or python3)
+# Requires: asciinema, agg, expect
 
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -15,45 +16,83 @@ GIF_FILE="docs/screenshots/w9s-demo.gif"
 
 mkdir -p demos docs/screenshots
 
-# Check for expect
-if ! command -v expect &>/dev/null; then
-  echo "Installing expect..."
-  sudo dnf install -y expect 2>/dev/null || sudo apt-get install -y expect 2>/dev/null || true
-fi
-
 echo "Recording automated w9s demo..."
 
-# Use expect to drive the TUI with scripted keystrokes
-# Create the expect script as a file (avoids quoting issues)
 cat > /tmp/w9s-demo-expect.exp <<'EXPECT'
 set timeout 30
 spawn env W9S_ENABLE_MOCK=1 ./build/w9s --mock
-# Wait for TUI to render
 expect {
     "w9s.sh" { }
     timeout { puts "Timeout waiting for TUI"; exit 1 }
 }
+
+# Dashboard — pause to show cluster overview
+sleep 3
+
+# Nodes view
+send "2"
 sleep 2
-# Dashboard view is default — pause to show it
+
+# Sort by column
+send "s"
+sleep 1.5
+send "s"
+sleep 1.5
+
+# Filter
+send "/"
+sleep 0.5
+send "gpu"
+sleep 1.5
+send "\033"
+sleep 1
+
+# Detail view
+send "\r"
 sleep 2
-# Switch to Nodes view (Tab)
-send "\t"
+send "\033"
+sleep 1
+
+# Export CSV
+send "x"
+sleep 1.5
+send "\033"
+sleep 1.5
+
+# Profiles view
+send "3"
 sleep 2
-# Switch to Profiles view (Tab)
-send "\t"
+
+# Profile detail
+send "\r"
 sleep 2
-# Switch to Images view (Tab)
-send "\t"
+send "\033"
+sleep 1
+
+# Images view
+send "4"
 sleep 2
-# Switch to Overlays view (Tab)
-send "\t"
+
+# Overlays view
+send "5"
 sleep 2
-# Switch to Power view (Tab)
-send "\t"
+
+# Drill into overlay files
+send "\r"
 sleep 2
-# Switch to Help view (?)
+send "\033"
+sleep 1
+
+# Cluster switcher
+send "C"
+sleep 2
+send "\033"
+sleep 1
+
+# Help view
 send "?"
 sleep 2
+
 # Quit
 send "q"
 expect eof
@@ -69,10 +108,9 @@ asciinema rec \
 
 echo "Recording saved to $CAST_FILE"
 
-# Convert to GIF
 if command -v agg &>/dev/null; then
   echo "Converting to GIF..."
-  agg --cols 120 --rows 35 --speed 1.5 "$CAST_FILE" "$GIF_FILE"
+  agg --cols 120 --rows 35 --speed 2 "$CAST_FILE" "$GIF_FILE"
   echo "GIF saved to $GIF_FILE"
   ls -lh "$GIF_FILE"
 fi
