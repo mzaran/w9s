@@ -54,6 +54,16 @@ tmux new-session -d -s "$SESSION" -x 120 -y 40 "$CMD"
 sleep 3
 
 echo ""
+echo "--- Cluster Switcher ---"
+# Shift+C should open cluster switcher (mock has 2 clusters)
+tmux send-keys -t "$SESSION" C; sleep 1
+OUT=$(capture)
+assert "Cluster: switcher opens" "Switch Cluster\|cluster" "$OUT"
+tmux send-keys -t "$SESSION" Escape; sleep 1
+OUT=$(capture)
+assert "Cluster: cancelled" "w9s.sh" "$OUT"
+
+echo ""
 echo "--- Dashboard (Tab 1) ---"
 OUT=$(capture)
 assert "Header: w9s.sh branding" "w9s.sh" "$OUT"

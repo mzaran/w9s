@@ -62,9 +62,15 @@ func runApp(cmd *cobra.Command, _ []string) error {
 			RefreshRate: "5s",
 			Clusters: []config.ClusterEntry{
 				{
-					Name: "mock",
+					Name: "mock-1",
 					Cluster: config.ClusterConfig{
-						Endpoint: "mock://localhost",
+						Endpoint: "mock://cluster-1",
+					},
+				},
+				{
+					Name: "mock-2",
+					Cluster: config.ClusterConfig{
+						Endpoint: "mock://cluster-2",
 					},
 				},
 			},

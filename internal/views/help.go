@@ -72,6 +72,7 @@ const helpText = `[yellow]Global Keys[-]
   [green]1-9[-]          Jump to view by number
   [green]q[-]            Quit
   [green]?[-]            Show this help
+  [green]C[-]            Switch cluster (Shift+C)
 
 [yellow]Resource Views (Nodes, Images, Power)[-]
 

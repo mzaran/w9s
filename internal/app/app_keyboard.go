@@ -65,6 +65,10 @@ func (a *App) handleRuneKey(event *tcell.EventKey) *tcell.EventKey {
 		a.switchToView("help")
 		return nil
 
+	case 'C':
+		a.showClusterSwitcher()
+		return nil
+
 	case '/':
 		// Filter is handled by individual views via OnKey.
 		// Delegate back to the current view.
