@@ -289,23 +289,30 @@ func (rv *ResourceView[T]) handleAction(event *tcell.EventKey) *tcell.EventKey {
 		}
 		if action.Destructive {
 			act := action // capture
+			n := name     // capture for goroutine
 			rv.modalOpen = true
 			ui.ShowConfirm(rv.App(), rv.Pages(), act.Label,
-				fmt.Sprintf("Are you sure you want to %s '%s'?", strings.ToLower(act.Label), name),
+				fmt.Sprintf("Are you sure you want to %s '%s'?", strings.ToLower(act.Label), n),
 				func() {
 					go func() {
-						if err := act.Execute(rv.Ctx(), name, item); err != nil {
-							rv.SetLastError(err)
+						if err := act.Execute(rv.Ctx(), n, item); err != nil {
+							rv.ShowStatusError(act.Label + " failed: " + err.Error())
+						} else {
+							rv.ShowStatusMessage(act.Label + " '" + n + "' completed")
 						}
 						_ = rv.Refresh()
 					}()
 				},
-				func() { rv.modalOpen = false }, // onDone: always clear modal state
+				func() { rv.modalOpen = false },
 			)
 		} else {
+			act := action
+			n := name
 			go func() {
-				if err := action.Execute(rv.Ctx(), name, item); err != nil {
-					rv.SetLastError(err)
+				if err := act.Execute(rv.Ctx(), n, item); err != nil {
+					rv.ShowStatusError(act.Label + " failed: " + err.Error())
+				} else {
+					rv.ShowStatusMessage(act.Label + " '" + n + "' completed")
 				}
 				_ = rv.Refresh()
 			}()

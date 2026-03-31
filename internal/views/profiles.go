@@ -296,7 +296,9 @@ func (pv *ProfilesView) showAddForm() {
 			}
 			go func() {
 				if err := pv.client.Profiles().Add(name, profile); err != nil {
-					pv.SetLastError(err)
+					pv.ShowStatusError("Add profile failed: " + err.Error())
+				} else {
+					pv.ShowStatusMessage("Profile '" + name + "' added")
 				}
 				_ = pv.Refresh()
 			}()
@@ -325,7 +327,9 @@ func (pv *ProfilesView) confirmDelete() {
 		func() {
 			go func() {
 				if err := pv.client.Profiles().Delete(name); err != nil {
-					pv.SetLastError(err)
+					pv.ShowStatusError("Delete failed: " + err.Error())
+				} else {
+					pv.ShowStatusMessage("Profile '" + name + "' deleted")
 				}
 				_ = pv.Refresh()
 			}()

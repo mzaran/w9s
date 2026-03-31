@@ -81,9 +81,12 @@ func showImageImportForm(rv *ResourceView[*dao.WwImage], client dao.WarewulfClie
 			if name == "" || source == "" {
 				return
 			}
+			rv.ShowStatusMessage("Importing '" + name + "'...")
 			go func() {
 				if err := client.Images().Import(name, source); err != nil {
-					rv.SetLastError(err)
+					rv.ShowStatusError("Import failed: " + err.Error())
+				} else {
+					rv.ShowStatusMessage("Image '" + name + "' imported")
 				}
 				_ = rv.Refresh()
 			}()

@@ -135,7 +135,9 @@ func showNodeAddForm(rv *ResourceView[*dao.WwNode], client dao.WarewulfClient) {
 			}
 			go func() {
 				if err := client.Nodes().Add(name, node); err != nil {
-					rv.SetLastError(err)
+					rv.ShowStatusError("Add node failed: " + err.Error())
+				} else {
+					rv.ShowStatusMessage("Node '" + name + "' added")
 				}
 				_ = rv.Refresh()
 			}()
@@ -181,7 +183,9 @@ func showNodeEditForm(rv *ResourceView[*dao.WwNode], client dao.WarewulfClient) 
 			}
 			go func() {
 				if err := client.Nodes().Update(name, updated); err != nil {
-					rv.SetLastError(err)
+					rv.ShowStatusError("Edit failed: " + err.Error())
+				} else {
+					rv.ShowStatusMessage("Node '" + name + "' updated")
 				}
 				_ = rv.Refresh()
 			}()
