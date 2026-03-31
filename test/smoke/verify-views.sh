@@ -87,8 +87,14 @@ else
   TOTAL=$((TOTAL+1)); FAIL=$((FAIL+1)); echo "  FAIL: Export: no CSV file created"
   TOTAL=$((TOTAL+1)); FAIL=$((FAIL+1)); echo "  FAIL: Export: CSV headers (skipped)"
 fi
-# Close export confirmation pane
-tmux send-keys -t "$SESSION" Escape; sleep 1
+# Flash message should appear immediately (before closing detail pane)
+sleep 1
+OUT=$(capture)
+assert "Flash: success message shown" "✓\|Exported" "$OUT"
+# Close detail pane and wait for auto-clear
+tmux send-keys -t "$SESSION" Escape; sleep 5
+OUT=$(capture)
+assert "Flash: hints restored after clear" "Filter\|Sort\|Detail" "$OUT"
 
 echo ""
 echo "--- Node Add Form ---"

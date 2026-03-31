@@ -88,6 +88,7 @@ func (a *App) initUI() {
 
 	// Status bar (1 row).
 	a.statusBar = ui.NewStatusBar(theme)
+	a.statusBar.SetApp(a.tviewApp)
 	a.statusBar.SetHints([]string{"q Quit", "Tab Next", "? Help", "1-7 Views"})
 
 	// Set cluster info in header.
@@ -224,6 +225,20 @@ func (a *App) initView(v views.View) {
 	}
 	if va, ok := v.(viewMgrAware); ok {
 		va.SetViewManager(a.viewMgr)
+	}
+
+	// Wire status message callback for flash messages.
+	type statusMessenger interface {
+		SetStatusMessageFn(func(string, bool))
+	}
+	if sm, ok := v.(statusMessenger); ok {
+		sm.SetStatusMessageFn(func(msg string, isError bool) {
+			if isError {
+				a.statusBar.ShowError(msg)
+			} else {
+				a.statusBar.ShowSuccess(msg)
+			}
+		})
 	}
 
 	a.viewMgr.Register(v)

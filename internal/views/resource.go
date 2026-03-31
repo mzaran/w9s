@@ -485,13 +485,14 @@ func (rv *ResourceView[T]) exportCSV() {
 	// Write to /tmp with timestamp.
 	filename := fmt.Sprintf("/tmp/w9s-export-%s-%d.csv", rv.Name(), time.Now().Unix())
 	if err := os.WriteFile(filename, []byte(b.String()), 0644); err != nil {
-		rv.SetLastError(err)
+		rv.ShowStatusError("Export failed: " + err.Error())
 		return
 	}
 
-	// Show confirmation in a detail pane.
-	rv.modalOpen = true
+	// Show flash and detail pane.
+	rv.ShowStatusMessage(fmt.Sprintf("Exported %d rows to %s", len(filtered), filename))
 	msg := fmt.Sprintf("Exported %d rows to:\n%s\n\n%s", len(filtered), filename, b.String())
+	rv.modalOpen = true
 	ui.ShowDetail(rv.Pages(), rv.App(), "export", "Export Complete", msg, func() {
 		rv.closeModal()
 	})

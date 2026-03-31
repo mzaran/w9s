@@ -37,11 +37,12 @@ type BaseView struct {
 	viewMgr     *ViewManager
 	switchViewFn func(string)
 
-	refreshing  atomic.Bool
-	initialized atomic.Bool
-	focused     atomic.Bool
-	lastErrMu   sync.Mutex
+	refreshing   atomic.Bool
+	initialized  atomic.Bool
+	focused      atomic.Bool
+	lastErrMu    sync.Mutex
 	lastErr      error
+	statusMsgFn  func(msg string, isError bool)
 }
 
 // NewBaseView creates a new BaseView with the given name and title.
@@ -130,6 +131,23 @@ func (b *BaseView) SetLastError(err error) {
 	b.lastErrMu.Lock()
 	defer b.lastErrMu.Unlock()
 	b.lastErr = err
+}
+
+// SetStatusMessageFn sets the callback for displaying flash messages in the status bar.
+func (b *BaseView) SetStatusMessageFn(fn func(string, bool)) { b.statusMsgFn = fn }
+
+// ShowStatusMessage displays a success flash message in the status bar.
+func (b *BaseView) ShowStatusMessage(msg string) {
+	if b.statusMsgFn != nil {
+		b.statusMsgFn(msg, false)
+	}
+}
+
+// ShowStatusError displays an error flash message in the status bar.
+func (b *BaseView) ShowStatusError(msg string) {
+	if b.statusMsgFn != nil {
+		b.statusMsgFn(msg, true)
+	}
 }
 
 // ViewManager manages the set of registered views and handles view switching.
