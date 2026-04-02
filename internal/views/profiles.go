@@ -59,6 +59,20 @@ func (pv *ProfilesView) Init(ctx context.Context) error {
 	tablePanel := tview.NewFlex().SetDirection(tview.FlexRow).
 		AddItem(pv.table, 0, 1, true)
 
+	// clearBackground is a DrawFunc that fills the entire area with spaces
+	// to prevent previous view content from bleeding through empty areas.
+	clearBackground := func(screen tcell.Screen, x, y, width, height int) (int, int, int, int) {
+		for row := y; row < y+height; row++ {
+			for col := x; col < x+width; col++ {
+				screen.SetContent(col, row, ' ', nil, tcell.StyleDefault)
+			}
+		}
+		return x, y, width, height
+	}
+
+	tablePanel.SetDrawFunc(clearBackground)
+	pv.tree.SetDrawFunc(clearBackground)
+
 	pv.container = tview.NewFlex().SetDirection(tview.FlexColumn).
 		AddItem(tablePanel, 0, 3, true).
 		AddItem(pv.tree, 0, 1, false)
@@ -162,6 +176,34 @@ func (pv *ProfilesView) Refresh() error {
 		return nil
 	}
 	pv.SetRefreshing(true)
+
+	pv.mu.RLock()
+	firstLoad := len(pv.profiles) == 0
+	pv.mu.RUnlock()
+
+	if firstLoad {
+		// Synchronous first load so the table renders immediately
+		// and avoids bleed-through from the previous view.
+		defer pv.SetRefreshing(false)
+
+		profiles, err := pv.client.Profiles().List()
+		if err != nil {
+			pv.SetLastError(err)
+			return nil
+		}
+
+		pv.mu.Lock()
+		pv.profiles = profiles
+		pv.sorted = make([]string, 0, len(profiles))
+		for k := range profiles {
+			pv.sorted = append(pv.sorted, k)
+		}
+		sort.Strings(pv.sorted)
+		pv.mu.Unlock()
+
+		pv.renderTable()
+		return nil
+	}
 
 	go func() {
 		defer pv.SetRefreshing(false)

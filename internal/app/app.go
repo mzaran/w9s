@@ -160,6 +160,9 @@ func (a *App) switchToView(name string) {
 	a.pages.SwitchToPage(name)
 	a.updateHeader()
 	a.updateStatusBar()
+	// Trigger a full screen synchronization on the next draw cycle
+	// to prevent previous view content from bleeding through.
+	a.tviewApp.Sync()
 }
 
 // Run starts the TUI application. Blocks until the app exits.

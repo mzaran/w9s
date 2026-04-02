@@ -141,6 +141,38 @@ func (ov *OverlaysView) Refresh() error {
 	}
 	ov.SetRefreshing(true)
 
+	ov.mu.RLock()
+	firstLoad := len(ov.overlays) == 0
+	ov.mu.RUnlock()
+
+	if firstLoad {
+		// Synchronous first load so the table renders immediately
+		// and avoids bleed-through from the previous view.
+		defer ov.SetRefreshing(false)
+
+		overlays, err := ov.client.Overlays().List()
+		if err != nil {
+			ov.SetLastError(err)
+			return nil
+		}
+
+		ov.mu.Lock()
+		ov.overlays = overlays
+		ov.sortedOverlays = make([]string, 0, len(overlays))
+		for k := range overlays {
+			ov.sortedOverlays = append(ov.sortedOverlays, k)
+		}
+		sort.Strings(ov.sortedOverlays)
+		ov.mu.Unlock()
+
+		if ov.mode == overlayModeList {
+			ov.renderOverlayList()
+		} else {
+			ov.renderFileList()
+		}
+		return nil
+	}
+
 	go func() {
 		defer ov.SetRefreshing(false)
 

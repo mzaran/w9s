@@ -23,12 +23,13 @@ w9s connects to the [Warewulf](https://github.com/warewulf/warewulf) v4 REST API
 - **Image management** — Import OCI images, build, delete
 - **Overlay browser** — Drill into overlay files, render `.ww` templates for specific nodes
 - **Column sorting** — Sort any table by any column (`s`/`S`)
-- **Live filter** — `/` to filter, Escape to clear
+- **Live filter** — `/` for fuzzy search across all columns, Escape to clear
 - **CSV export** — `x` exports the current table to a CSV file
 - **Multi-cluster** — `Shift+C` to switch between configured clusters
 - **Flash messages** — Green/red status bar feedback for all operations
 - **Scrollable detail panes** — Full-screen, left-aligned, word-wrapped
 - **Keyboard-first** — Works over SSH, no browser needed
+- **Read-only mode** — `--readonly` disables all write operations
 - **Single static binary** — `CGO_ENABLED=0`, zero dependencies
 
 ## Installation
@@ -86,6 +87,7 @@ clusters:
       password: "changeme"
 ui:
   enableMouse: true
+  skin: "dracula"
 ```
 
 ### 2. Run
@@ -104,6 +106,49 @@ w9s version                            # show version
 | `W9S_USERNAME` | API username |
 | `W9S_PASSWORD` | API password |
 | `W9S_ENABLE_MOCK` | Set to `1` to allow `--mock` flag |
+
+## CLI Flags
+
+| Flag | Description |
+|------|-------------|
+| `--config` | Path to config file (default: `~/.config/w9s/config.yaml`) |
+| `--readonly` | Disable all write operations (add, edit, delete, build, import) |
+| `--debug` | Enable debug logging |
+| `--mock` | Use mock data (requires `W9S_ENABLE_MOCK=1`) |
+
+## Themes
+
+w9s ships with 5 built-in skins: `default`, `dracula`, `gruvbox`, `nord`, `solarized`.
+
+Set a skin in your config:
+
+```yaml
+ui:
+  skin: "dracula"
+```
+
+### Custom Skins
+
+Create `~/.config/w9s/skins/mytheme.yaml`:
+
+```yaml
+name: mytheme
+header:
+  foreground: "#ffffff"
+  background: "#1a1a2e"
+table:
+  header: "#4682b4"
+  row_even: "#1a2332"
+  row_odd: "#c8c8c8"
+status:
+  success: "#4caf50"
+  error: "#f44336"
+  info: "#00bcd4"
+border: "#888888"
+accent: "#ffc107"
+```
+
+Then set `ui.skin: "mytheme"` in your config.
 
 ## Views
 
@@ -128,6 +173,21 @@ w9s version                            # show version
 | `C` (Shift+C) | Switch cluster |
 | `?` | Help |
 | `q` | Quit |
+
+### Command Bar
+
+Press `:` to open the command bar. Available commands:
+
+| Command | Action |
+|---------|--------|
+| `dashboard` / `1` | Switch to Dashboard |
+| `nodes` / `2` | Switch to Nodes |
+| `profiles` / `3` | Switch to Profiles |
+| `images` / `4` | Switch to Images |
+| `overlays` / `5` | Switch to Overlays |
+| `power` / `6` | Switch to Power |
+| `help` / `7` | Switch to Help |
+| `q` / `quit` | Quit |
 
 ### Table Views (Nodes, Images, Power)
 
