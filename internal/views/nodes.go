@@ -33,7 +33,7 @@ func NewNodesView(app *tview.Application, client dao.WarewulfClient) View {
 		FetchRaw: func(name string) (any, error) {
 			return client.Nodes().Get(name)
 		},
-		ExtraHints: []string{"a Add", "e Edit"},
+		ExtraHints: []string{"a Add", "e Edit", "f Fields"},
 		OnKeyExtra: func(rv *ResourceView[*dao.WwNode], event *tcell.EventKey) *tcell.EventKey {
 			if event.Key() != tcell.KeyRune {
 				return event
@@ -44,6 +44,9 @@ func NewNodesView(app *tview.Application, client dao.WarewulfClient) View {
 				return nil
 			case 'e':
 				showNodeEditForm(rv, client)
+				return nil
+			case 'f':
+				showNodeFields(rv, client)
 				return nil
 			}
 			return event
@@ -150,6 +153,42 @@ func showNodeAddForm(rv *ResourceView[*dao.WwNode], client dao.WarewulfClient) {
 			rv.App().SetFocus(rv.table)
 		},
 	)
+}
+
+func showNodeFields(rv *ResourceView[*dao.WwNode], client dao.WarewulfClient) {
+	name, _, ok := rv.selectedItem()
+	if !ok {
+		return
+	}
+
+	go func() {
+		fields, err := client.Nodes().GetFields(name)
+		if err != nil {
+			rv.ShowStatusError("Failed to fetch fields: " + err.Error())
+			return
+		}
+
+		var b strings.Builder
+		fmt.Fprintf(&b, "%-30s %-25s %s\n", "FIELD", "VALUE", "SOURCE")
+		fmt.Fprintf(&b, "%s\n", strings.Repeat("-", 80))
+		for _, f := range fields {
+			val := f.Value
+			if len(val) > 25 {
+				val = val[:22] + "..."
+			}
+			fmt.Fprintf(&b, "%-30s %-25s %s\n", f.Field, val, f.Source)
+		}
+
+		rv.App().QueueUpdateDraw(func() {
+			rv.modalOpen = true
+			ui.ShowDetail(rv.Pages(), rv.App(), "detail", name+" (Fields)", b.String(), func() {
+				rv.modalOpen = false
+				rv.Pages().RemovePage("detail")
+				rv.Pages().SwitchToPage(rv.Name())
+				rv.App().SetFocus(rv.table)
+			})
+		})
+	}()
 }
 
 func showNodeEditForm(rv *ResourceView[*dao.WwNode], client dao.WarewulfClient) {
