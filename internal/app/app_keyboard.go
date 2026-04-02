@@ -15,6 +15,11 @@ type Filterable interface {
 // inputCapture handles global keyboard shortcuts and delegates
 // unhandled keys to the current view.
 func (a *App) inputCapture(event *tcell.EventKey) *tcell.EventKey {
+	// If command bar is active, let it handle all keys.
+	if a.commandActive {
+		return event
+	}
+
 	// Let the current view handle the key first.
 	if v := a.viewMgr.CurrentView(); v != nil {
 		result := v.OnKey(event)
@@ -75,7 +80,7 @@ func (a *App) handleRuneKey(event *tcell.EventKey) *tcell.EventKey {
 		return event
 
 	case ':':
-		// TODO: focus command input (future)
+		a.showCommandBar()
 		return nil
 
 	case '1', '2', '3', '4', '5', '6', '7':
