@@ -40,26 +40,9 @@ func (s *StatusBar) SetApp(app *tview.Application) {
 	s.app = app
 }
 
-// SetHints displays keyboard hints. Each hint is "key action" format.
-// If a flash message is active, hints are stored but not rendered until the flash clears.
+// SetHints stores keyboard hints (no longer rendered — hints are in the header Menu).
 func (s *StatusBar) SetHints(hints []string) {
 	s.lastHints = hints
-	if s.flashing {
-		return // don't overwrite flash message
-	}
-	s.Clear()
-	key := ColorToHex(s.theme.HotkeyFg)
-	hint := ColorToHex(s.theme.HintFg)
-
-	fmt.Fprint(s, " ")
-	for _, h := range hints {
-		k, a := splitHint(h)
-		if a != "" {
-			fmt.Fprintf(s, "[#%06x::b]%s[-:-:-] [#%06x]%s[-]  ", key, k, hint, a)
-		} else {
-			fmt.Fprintf(s, "[#%06x]%s[-]  ", hint, h)
-		}
-	}
 }
 
 // ShowError displays a red error flash message that auto-clears after 4 seconds.
@@ -162,12 +145,3 @@ func (s *StatusBar) SetMessage(msg string) {
 	fmt.Fprintf(s, " [white]%s[-]", msg)
 }
 
-// splitHint splits "key action" on first space.
-func splitHint(s string) (string, string) {
-	for i := 0; i < len(s); i++ {
-		if s[i] == ' ' {
-			return s[:i], s[i+1:]
-		}
-	}
-	return s, ""
-}

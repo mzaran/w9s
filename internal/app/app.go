@@ -10,6 +10,7 @@ import (
 	"github.com/mzaran/w9s/internal/config"
 	"github.com/mzaran/w9s/internal/dao"
 	"github.com/mzaran/w9s/internal/ui"
+	"github.com/mzaran/w9s/internal/version"
 	"github.com/mzaran/w9s/internal/views"
 )
 
@@ -96,7 +97,7 @@ func (a *App) initUI() {
 		}
 	}
 
-	// Header: single row (logo + info).
+	// Header: 4-row, 2-column (ClusterInfo + Menu).
 	a.header = ui.NewHeader(theme)
 
 	// Breadcrumb bar (1 row).
@@ -105,17 +106,37 @@ func (a *App) initUI() {
 	// Content pages.
 	a.pages = tview.NewPages()
 
-	// Status bar (1 row).
+	// Status bar (1 row, flash messages only).
 	a.statusBar = ui.NewStatusBar(theme)
 	a.statusBar.SetApp(a.tviewApp)
-	a.statusBar.SetHints([]string{"q Quit", "Tab Next", "? Help", ": Command", "1-7 Views"})
 
 	// Set cluster info in header.
 	if a.config.ActiveCluster != nil {
-		a.header.SetClusterInfo(a.config.ActiveCluster.Endpoint, "")
+		a.header.ClusterInfo().SetEndpoint(a.config.ActiveCluster.Endpoint)
 	}
+	// Find cluster name from config.
+	if a.config.DefaultCluster != "" {
+		a.header.ClusterInfo().SetClusterName(a.config.DefaultCluster)
+	} else if len(a.config.Clusters) > 0 {
+		a.header.ClusterInfo().SetClusterName(a.config.Clusters[0].Name)
+	}
+	// Set username from active cluster config.
+	if a.config.ActiveCluster != nil && a.config.ActiveCluster.Username != "" {
+		a.header.ClusterInfo().SetUsername(a.config.ActiveCluster.Username)
+	}
+	// Set w9s version.
+	a.header.ClusterInfo().SetW9sVersion(version.Short())
+	// Fetch warewulf server version in background.
+	go func() {
+		if info, err := a.client.ServerInfo(); err == nil && info != nil {
+			a.tviewApp.QueueUpdateDraw(func() {
+				a.header.ClusterInfo().SetWWVersion(info.Version)
+			})
+		}
+	}()
+
 	if a.readOnly {
-		a.header.SetReadOnly(true)
+		a.header.ClusterInfo().SetReadOnly(true)
 	}
 
 	// Command bar (hidden initially, 0 height).
@@ -123,7 +144,7 @@ func (a *App) initUI() {
 
 	// Main layout: vertical flex.
 	a.mainLayout = tview.NewFlex().SetDirection(tview.FlexRow).
-		AddItem(a.header, 1, 0, false).
+		AddItem(a.header, 7, 0, false).
 		AddItem(a.crumbs, 1, 0, false).
 		AddItem(a.pages, 0, 1, true).
 		AddItem(a.statusBar, 1, 0, false).
@@ -142,7 +163,13 @@ func (a *App) updateHeader() {
 	a.crumbs.SetCurrentView(a.viewMgr.CurrentViewName())
 }
 
-// updateStatusBar updates the status bar hints for the current view.
+// globalHints are always shown in the menu regardless of current view.
+var globalHints = []string{
+	"1 Dashboard", "2 Nodes", "3 Profiles", "4 Images",
+	"5 Overlays", "6 Power", "7 Help", "q Quit",
+}
+
+// updateStatusBar updates the menu hints for the current view.
 func (a *App) updateStatusBar() {
 	if a.viewMgr == nil {
 		return
@@ -151,9 +178,13 @@ func (a *App) updateStatusBar() {
 	if current != nil {
 		hints := current.Hints()
 		if hints == nil {
-			hints = []string{"q Quit", "Tab Next View", "? Help"}
+			hints = []string{}
 		}
-		a.statusBar.SetHints(hints)
+		// Merge: view-specific hints first, then global navigation.
+		all := make([]string, 0, len(hints)+len(globalHints))
+		all = append(all, hints...)
+		all = append(all, globalHints...)
+		a.header.Menu().SetHints(all)
 	}
 }
 
@@ -288,6 +319,16 @@ func (a *App) initView(v views.View) {
 		})
 		sa.SetHideSpinnerFn(func() {
 			a.statusBar.HideSpinner()
+		})
+	}
+
+	// Wire header metrics callback for dashboard view.
+	type headerMetricsAware interface {
+		SetHeaderMetricsFn(func(nodes, up, images, profiles, overlays int))
+	}
+	if hma, ok := v.(headerMetricsAware); ok {
+		hma.SetHeaderMetricsFn(func(nodes, _, images, _, overlays int) {
+			a.header.ClusterInfo().SetMetrics(nodes, images, overlays)
 		})
 	}
 

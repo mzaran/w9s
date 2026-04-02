@@ -65,7 +65,8 @@ func (a *App) swapCluster(idx int) error {
 	// For mock mode, just update config and refresh.
 	if target.Cluster.Endpoint == "" || len(target.Cluster.Endpoint) > 4 && target.Cluster.Endpoint[:7] == "mock://" {
 		a.config.ActiveCluster = &a.config.Clusters[idx].Cluster
-		a.header.SetClusterInfo(target.Cluster.Endpoint, "")
+		a.header.ClusterInfo().SetEndpoint(target.Cluster.Endpoint)
+		a.header.ClusterInfo().SetClusterName(target.Name)
 		if v := a.viewMgr.CurrentView(); v != nil {
 			_ = v.Refresh()
 		}
@@ -97,7 +98,8 @@ func (a *App) swapCluster(idx int) error {
 	a.client.Close()
 	a.client = newClient
 	a.config.ActiveCluster = &a.config.Clusters[idx].Cluster
-	a.header.SetClusterInfo(target.Cluster.Endpoint, "")
+	a.header.ClusterInfo().SetEndpoint(target.Cluster.Endpoint)
+		a.header.ClusterInfo().SetClusterName(target.Name)
 
 	// Refresh current view.
 	if v := a.viewMgr.CurrentView(); v != nil {

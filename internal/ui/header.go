@@ -1,71 +1,51 @@
 // Package ui provides reusable TUI components for the w9s application.
 package ui
 
-import (
-	"fmt"
+import "github.com/rivo/tview"
 
-	"github.com/rivo/tview"
-)
-
-// Header is a single-row top bar: logo + cluster connection info.
-type Header struct {
-	*tview.Flex
-	theme    *Theme
-	logo     *tview.TextView
-	info     *tview.TextView
-	endpoint string
-	version  string
-	readOnly bool
+// WolfSmall is a compact wolf ASCII art for the header logo panel.
+// WolfFace is the w9s mascot.
+var WolfFace = []string{
+	"(O.o)",
 }
 
-// NewHeader creates a new single-row header with logo and info panel.
+// Header is a 3-column top bar: ClusterInfo (left) + Menu (middle) + Logo (right).
+type Header struct {
+	*tview.Flex
+	clusterInfo *ClusterInfo
+	menu        *Menu
+	logo        *LogoPanel
+}
+
+// NewHeader creates a new 3-column header.
 func NewHeader(theme *Theme) *Header {
 	h := &Header{
-		Flex:  tview.NewFlex().SetDirection(tview.FlexColumn),
-		theme: theme,
+		Flex:        tview.NewFlex().SetDirection(tview.FlexColumn),
+		clusterInfo: NewClusterInfo(theme),
+		menu:        NewMenu(theme),
+		logo:        NewLogoPanel(theme, WolfFace, "w9s.sh"),
 	}
 
-	h.logo = NewLogo(theme)
-	h.info = tview.NewTextView().SetDynamicColors(true)
-	h.info.SetBackgroundColor(theme.BgColor)
-	h.info.SetBorder(false)
-
-	h.Flex.AddItem(h.logo, 10, 0, false).
-		AddItem(h.info, 0, 1, false)
+	h.Flex.AddItem(h.clusterInfo, 35, 0, false).
+		AddItem(h.menu, 0, 1, false).
+		AddItem(h.logo, 10, 0, false)
 	h.SetBackgroundColor(theme.BgColor)
 	h.SetBorder(false)
 
 	return h
 }
 
-// SetClusterInfo updates the endpoint and version display.
-func (h *Header) SetClusterInfo(endpoint, version string) {
-	h.endpoint = endpoint
-	h.version = version
-	h.renderInfo()
+// ClusterInfo returns the left cluster info panel.
+func (h *Header) ClusterInfo() *ClusterInfo {
+	return h.clusterInfo
 }
 
-func (h *Header) renderInfo() {
-	h.info.Clear()
-	conn := ColorToHex(h.theme.ConnectedFg)
-	dim := ColorToHex(h.theme.DimFg)
-
-	fmt.Fprintf(h.info, "[#%06x]● Connected[-]  [white]%s[-]", conn, h.endpoint)
-	if h.version != "" {
-		fmt.Fprintf(h.info, "  [#%06x]%s[-]", dim, h.version)
-	}
-	if h.readOnly {
-		fmt.Fprintf(h.info, "  [red::b][READ-ONLY][-:-:-]")
-	}
+// Menu returns the middle menu/hints panel.
+func (h *Header) Menu() *Menu {
+	return h.menu
 }
 
-// SetReadOnly enables or disables the read-only indicator.
-func (h *Header) SetReadOnly(ro bool) {
-	h.readOnly = ro
-	h.renderInfo()
-}
-
-// SetClusterName is a compatibility method -- calls SetClusterInfo.
-func (h *Header) SetClusterName(name string) {
-	h.SetClusterInfo(name, h.version)
+// Logo returns the right logo panel.
+func (h *Header) Logo() *LogoPanel {
+	return h.logo
 }
