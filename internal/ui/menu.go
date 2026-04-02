@@ -2,11 +2,12 @@ package ui
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/rivo/tview"
 )
 
-// Menu is the right header panel showing keyboard hint shortcuts.
+// Menu is the header panel showing keyboard hint shortcuts.
 type Menu struct {
 	*tview.TextView
 	theme *Theme
@@ -20,6 +21,7 @@ func NewMenu(theme *Theme) *Menu {
 		SetTextAlign(tview.AlignLeft)
 	tv.SetBackgroundColor(theme.BgColor)
 	tv.SetBorder(false)
+	tv.SetBorderPadding(0, 0, 2, 0) // left padding for spacing from ClusterInfo
 
 	return &Menu{
 		TextView: tv,
@@ -27,7 +29,7 @@ func NewMenu(theme *Theme) *Menu {
 	}
 }
 
-// SetHints updates the keyboard hints displayed in a 2-column grid (max 4 rows).
+// SetHints updates the keyboard hints in a column-major grid.
 func (m *Menu) SetHints(hints []string) {
 	m.hints = hints
 	m.render()
@@ -38,12 +40,11 @@ func (m *Menu) render() {
 	keyClr := ColorToHex(m.theme.HotkeyFg)
 	hintClr := ColorToHex(m.theme.HintFg)
 
-	// Fixed-width cells: each hint occupies exactly cellWidth characters.
-	// 3 columns x 7 rows = 21 slots (enough for ~16 hints).
 	const (
-		maxRows  = 7
-		maxCols  = 3
-		cellWidth = 16 // e.g. "s Sort          " or "Tab Next View   "
+		maxRows = 7
+		maxCols = 2
+		keyW    = 4  // width for key portion (e.g. "Tab " or "s   ")
+		descW   = 12 // width for description (e.g. "Next View   ")
 	)
 
 	total := len(m.hints)
@@ -51,7 +52,6 @@ func (m *Menu) render() {
 		total = maxRows * maxCols
 	}
 
-	// Column-major layout: fill down, then across.
 	cols := (total + maxRows - 1) / maxRows
 	if cols > maxCols {
 		cols = maxCols
@@ -66,12 +66,25 @@ func (m *Menu) render() {
 			if idx >= total {
 				continue
 			}
+			if col > 0 {
+				fmt.Fprint(m, "  ") // gap between columns
+			}
 			k, a := splitMenuHint(m.hints[idx])
-			fmt.Fprintf(m, "[#%06x::b]%s[-:-:-] [#%06x]%-*s[-]", keyClr, k, hintClr, cellWidth-len(k)-1, a)
+			// Pad key and description separately for clean alignment.
+			paddedKey := padRight(k, keyW)
+			paddedDesc := padRight(a, descW)
+			fmt.Fprintf(m, "[#%06x::b]%s[-:-:-][#%06x]%s[-]", keyClr, paddedKey, hintClr, paddedDesc)
 		}
 	}
 }
 
+// padRight pads s with spaces to the given width.
+func padRight(s string, width int) string {
+	if len(s) >= width {
+		return s
+	}
+	return s + strings.Repeat(" ", width-len(s))
+}
 
 // splitMenuHint splits "key action" on first space.
 func splitMenuHint(s string) (string, string) {

@@ -126,13 +126,27 @@ func (a *App) initUI() {
 	}
 	// Set w9s version.
 	a.header.ClusterInfo().SetW9sVersion(version.Short())
-	// Fetch warewulf server version in background.
+	// Fetch warewulf server version and initial metrics in background.
 	go func() {
 		if info, err := a.client.ServerInfo(); err == nil && info != nil {
 			a.tviewApp.QueueUpdateDraw(func() {
 				a.header.ClusterInfo().SetWWVersion(info.Version)
 			})
 		}
+		// Populate header metrics at startup so they show immediately
+		// regardless of which view is active first.
+		nodes, nodeErr := a.client.Nodes().List()
+		images, imgErr := a.client.Images().List()
+		nodeCount, imgCount := 0, 0
+		if nodeErr == nil {
+			nodeCount = len(nodes)
+		}
+		if imgErr == nil {
+			imgCount = len(images)
+		}
+		a.tviewApp.QueueUpdateDraw(func() {
+			a.header.ClusterInfo().SetMetrics(nodeCount, imgCount, 0)
+		})
 	}()
 
 	if a.readOnly {
