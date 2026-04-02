@@ -23,6 +23,9 @@ type App struct {
 	pages         *tview.Pages
 	header        *ui.Header
 	statusBar     *ui.StatusBar
+	mainLayout    *tview.Flex
+	commandInput  *tview.InputField
+	commandActive bool
 	config        *config.Config
 	refreshTicker *time.Ticker
 }
@@ -89,22 +92,26 @@ func (a *App) initUI() {
 	// Status bar (1 row).
 	a.statusBar = ui.NewStatusBar(theme)
 	a.statusBar.SetApp(a.tviewApp)
-	a.statusBar.SetHints([]string{"q Quit", "Tab Next", "? Help", "1-7 Views"})
+	a.statusBar.SetHints([]string{"q Quit", "Tab Next", "? Help", ": Command", "1-7 Views"})
 
 	// Set cluster info in header.
 	if a.config.ActiveCluster != nil {
 		a.header.SetClusterInfo(a.config.ActiveCluster.Endpoint, "")
 	}
 
+	// Command bar (hidden initially, 0 height).
+	a.initCommandBar()
+
 	// Main layout: vertical flex.
-	mainLayout := tview.NewFlex().SetDirection(tview.FlexRow).
+	a.mainLayout = tview.NewFlex().SetDirection(tview.FlexRow).
 		AddItem(a.header, 2, 0, false).
 		AddItem(a.pages, 0, 1, true).
-		AddItem(a.statusBar, 1, 0, false)
+		AddItem(a.statusBar, 1, 0, false).
+		AddItem(a.commandInput, 0, 0, false)
 
 	a.viewMgr = views.NewViewManager()
 
-	a.tviewApp.SetRoot(mainLayout, true)
+	a.tviewApp.SetRoot(a.mainLayout, true)
 }
 
 // updateHeader refreshes the header bar to show the current view tab.

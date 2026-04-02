@@ -73,6 +73,18 @@ const helpText = `[yellow]Global Keys[-]
   [green]q[-]            Quit
   [green]?[-]            Show this help
   [green]C[-]            Switch cluster (Shift+C)
+  [green]:[-]            Command bar (type :nodes, :q, etc.)
+
+[yellow]Command Bar Commands[-]
+
+  [green]:dashboard[-]   or [green]:1[-]   Switch to Dashboard
+  [green]:nodes[-]       or [green]:2[-]   Switch to Nodes
+  [green]:profiles[-]    or [green]:3[-]   Switch to Profiles
+  [green]:images[-]      or [green]:4[-]   Switch to Images
+  [green]:overlays[-]    or [green]:5[-]   Switch to Overlays
+  [green]:power[-]       or [green]:6[-]   Switch to Power
+  [green]:help[-]        or [green]:7[-]   Switch to Help
+  [green]:q[-]           or [green]:quit[-] Quit
 
 [yellow]Resource Views (Nodes, Images, Power)[-]
 
