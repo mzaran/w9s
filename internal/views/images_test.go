@@ -42,7 +42,7 @@ func TestImagesViewHints(t *testing.T) {
 	assert.Contains(t, hints, "i Import")
 	assert.Contains(t, hints, "b Build")
 	assert.Contains(t, hints, "d Delete")
-	assert.Contains(t, hints, "/ Filter")
+	assert.Contains(t, hints, "/ Filter (fuzzy)")
 	assert.Contains(t, hints, "r Refresh")
 }
 

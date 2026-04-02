@@ -43,7 +43,7 @@ func TestNodesViewHints(t *testing.T) {
 	assert.Contains(t, hints, "e Edit")
 	assert.Contains(t, hints, "d Delete")
 	assert.Contains(t, hints, "b Build Overlays")
-	assert.Contains(t, hints, "/ Filter")
+	assert.Contains(t, hints, "/ Filter (fuzzy)")
 	assert.Contains(t, hints, "r Refresh")
 }
 

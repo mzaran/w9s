@@ -88,7 +88,7 @@ const helpText = `[yellow]Global Keys[-]
 
 [yellow]Resource Views (Nodes, Images, Power)[-]
 
-  [green]/[-]            Open filter
+  [green]/[-]            Open filter (fuzzy match)
   [green]Escape[-]       Clear filter / cancel
   [green]Enter[-]        Show detail for selected item
   [green]r[-]            Refresh data

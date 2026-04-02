@@ -11,6 +11,7 @@ import (
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
+	"github.com/sahilm/fuzzy"
 
 	"github.com/mzaran/w9s/internal/ui"
 )
@@ -116,7 +117,7 @@ func (rv *ResourceView[T]) Render() tview.Primitive {
 // Hints returns the keyboard hints for the status bar.
 func (rv *ResourceView[T]) Hints() []string {
 	hints := []string{
-		"/ Filter",
+		"/ Filter (fuzzy)",
 		"s Sort",
 		"S Reverse",
 		"x Export",
@@ -400,22 +401,36 @@ func (rv *ResourceView[T]) filteredKeys() []string {
 	if rv.filterQuery == "" {
 		keys = make([]string, len(rv.sortedKeys))
 		copy(keys, rv.sortedKeys)
-	} else {
+	} else if rv.config.Filter != nil {
 		query := strings.ToLower(rv.filterQuery)
 		for _, key := range rv.sortedKeys {
 			item := rv.items[key]
-			if rv.config.Filter != nil {
-				if rv.config.Filter(key, item, query) {
-					keys = append(keys, key)
-				}
-			} else {
-				for _, c := range rv.config.Columns {
-					if strings.Contains(strings.ToLower(c.Extract(key, item)), query) {
-						keys = append(keys, key)
-						break
-					}
-				}
+			if rv.config.Filter(key, item, query) {
+				keys = append(keys, key)
 			}
+		}
+	} else {
+		// Fuzzy matching across all column values.
+		type searchEntry struct {
+			key  string
+			text string
+		}
+		entries := make([]searchEntry, 0, len(rv.sortedKeys))
+		for _, key := range rv.sortedKeys {
+			item := rv.items[key]
+			var parts []string
+			for _, c := range rv.config.Columns {
+				parts = append(parts, c.Extract(key, item))
+			}
+			entries = append(entries, searchEntry{key: key, text: strings.Join(parts, " ")})
+		}
+		src := make(fuzzySource, len(entries))
+		for i, e := range entries {
+			src[i] = e.text
+		}
+		matches := fuzzy.FindFrom(rv.filterQuery, src)
+		for _, m := range matches {
+			keys = append(keys, entries[m.Index].key)
 		}
 	}
 
@@ -545,3 +560,9 @@ func sortKeys[T any](m map[string]T) []string {
 	sort.Strings(keys)
 	return keys
 }
+
+// fuzzySource implements fuzzy.Source for string slices.
+type fuzzySource []string
+
+func (s fuzzySource) String(i int) string { return s[i] }
+func (s fuzzySource) Len() int            { return len(s) }
