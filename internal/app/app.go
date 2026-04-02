@@ -27,6 +27,7 @@ type App struct {
 	commandInput  *tview.InputField
 	commandActive bool
 	config        *config.Config
+	readOnly      bool
 	refreshTicker *time.Ticker
 }
 
@@ -45,6 +46,7 @@ func New(client dao.WarewulfClient, cfg *config.Config) (*App, error) {
 		client:   client,
 		tviewApp: tviewApp,
 		config:   cfg,
+		readOnly: cfg.ReadOnly,
 	}
 
 	a.initUI()
@@ -62,6 +64,11 @@ func (a *App) Client() dao.WarewulfClient {
 // Config returns the app configuration.
 func (a *App) Config() *config.Config {
 	return a.config
+}
+
+// ReadOnly reports whether the app is in read-only mode.
+func (a *App) ReadOnly() bool {
+	return a.readOnly
 }
 
 // TviewApp returns the underlying tview application.
@@ -97,6 +104,9 @@ func (a *App) initUI() {
 	// Set cluster info in header.
 	if a.config.ActiveCluster != nil {
 		a.header.SetClusterInfo(a.config.ActiveCluster.Endpoint, "")
+	}
+	if a.readOnly {
+		a.header.SetReadOnly(true)
 	}
 
 	// Command bar (hidden initially, 0 height).
@@ -219,6 +229,14 @@ func (a *App) initView(v views.View) {
 		})
 	})
 
+	// If the view embeds BaseView, set read-only mode.
+	type readOnlyAware interface {
+		SetReadOnly(bool)
+	}
+	if roa, ok := v.(readOnlyAware); ok {
+		roa.SetReadOnly(a.readOnly)
+	}
+
 	// If the view embeds BaseView, set its pages and viewMgr references
 	// so views can show modals and navigate.
 	type pagesAware interface {
@@ -259,6 +277,16 @@ func (a *App) initView(v views.View) {
 		})
 		sa.SetHideSpinnerFn(func() {
 			a.statusBar.HideSpinner()
+		})
+	}
+
+	// Wire header metrics callback for dashboard view.
+	type headerMetricsAware interface {
+		SetHeaderMetricsFn(func(nodes, up, images, profiles, overlays int))
+	}
+	if hma, ok := v.(headerMetricsAware); ok {
+		hma.SetHeaderMetricsFn(func(nodes, up, images, profiles, overlays int) {
+			a.header.SetMetrics(nodes, up, images, profiles, overlays)
 		})
 	}
 

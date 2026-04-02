@@ -19,9 +19,10 @@ import (
 )
 
 var (
-	cfgFile string
-	debug   bool
-	useMock bool
+	cfgFile  string
+	debug    bool
+	useMock  bool
+	readOnly bool
 )
 
 // rootCmd is the base command for w9s.
@@ -42,6 +43,8 @@ func init() {
 		_ = rootCmd.PersistentFlags().MarkHidden("mock")
 	}
 
+	rootCmd.PersistentFlags().BoolVar(&readOnly, "readonly", false, "disable all destructive actions (add, delete, edit, build, import)")
+
 	rootCmd.AddCommand(versionCmd)
 }
 
@@ -60,6 +63,7 @@ func runApp(cmd *cobra.Command, _ []string) error {
 	if useMock && os.Getenv("W9S_ENABLE_MOCK") == "1" {
 		cfg = &config.Config{
 			RefreshRate: "5s",
+			ReadOnly:    readOnly,
 			Clusters: []config.ClusterEntry{
 				{
 					Name: "mock-1",
@@ -84,6 +88,11 @@ func runApp(cmd *cobra.Command, _ []string) error {
 		}
 	}
 
+	// CLI flag overrides config file.
+	if readOnly {
+		cfg.ReadOnly = true
+	}
+
 	// Create the appropriate client.
 	var a *app.App
 	if useMock && os.Getenv("W9S_ENABLE_MOCK") == "1" {
@@ -97,10 +106,20 @@ func runApp(cmd *cobra.Command, _ []string) error {
 				timeout = d
 			}
 		}
-		client, clientErr := dao.NewClientFromConfig(
-			cluster.Endpoint, cluster.Username, cluster.Password,
-			cluster.Insecure, timeout,
-		)
+		opts := []dao.ClientOption{
+			dao.WithEndpoint(cluster.Endpoint),
+			dao.WithInsecure(cluster.Insecure),
+			dao.WithTimeout(timeout),
+		}
+		if cluster.Username != "" {
+			opts = append(opts, dao.WithBasicAuth(cluster.Username, cluster.Password))
+		}
+		if cluster.PowerTimeout != "" {
+			if pt, ptErr := time.ParseDuration(cluster.PowerTimeout); ptErr == nil {
+				opts = append(opts, dao.WithPowerTimeout(pt))
+			}
+		}
+		client, clientErr := dao.NewHTTPClient(opts...)
 		if clientErr != nil {
 			return fmt.Errorf("failed to create client: %w", clientErr)
 		}

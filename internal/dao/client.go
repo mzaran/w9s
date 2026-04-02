@@ -8,7 +8,6 @@ import (
 	"io"
 	"net"
 	"net/http"
-	"net/url"
 	"os/exec"
 	"strings"
 	"sync"
@@ -51,15 +50,23 @@ func WithTimeout(d time.Duration) ClientOption {
 	}
 }
 
+// WithPowerTimeout sets the timeout for power (IPMI) operations.
+func WithPowerTimeout(d time.Duration) ClientOption {
+	return func(c *HTTPClient) {
+		c.powerTimeout = d
+	}
+}
+
 // HTTPClient is a real HTTP client that implements WarewulfClient
 // by talking to the Warewulf REST API.
 type HTTPClient struct {
-	baseURL    string
-	httpClient *http.Client
-	username   string
-	password   string
-	insecure   bool
-	timeout    time.Duration
+	baseURL      string
+	httpClient   *http.Client
+	username     string
+	password     string
+	insecure     bool
+	timeout      time.Duration
+	powerTimeout time.Duration
 
 	hasPower     bool
 	hasPowerOnce sync.Once
@@ -133,7 +140,11 @@ func (c *HTTPClient) Power() PowerManager {
 		return &noopPowerManager{}
 	}
 	if c.powerMgr == nil {
-		mgr, err := NewWwctlPowerManager()
+		timeout := c.powerTimeout
+		if timeout <= 0 {
+			timeout = DefaultPowerTimeout
+		}
+		mgr, err := NewWwctlPowerManagerWithTimeout(timeout)
 		if err != nil {
 			return &noopPowerManager{}
 		}
@@ -311,243 +322,6 @@ func jsonBody(v interface{}) (io.Reader, error) {
 		return nil, fmt.Errorf("encoding JSON body: %w", err)
 	}
 	return buf, nil
-}
-
-// ---------- Node Manager ----------
-
-type httpNodeManager struct {
-	client *HTTPClient
-}
-
-func (m *httpNodeManager) List() (map[string]*WwNode, error) {
-	var result map[string]*WwNode
-	if err := m.client.doJSON(http.MethodGet, "/api/nodes/", nil, &result); err != nil {
-		return nil, err
-	}
-	return result, nil
-}
-
-func (m *httpNodeManager) Get(id string) (*WwNode, error) {
-	var result WwNode
-	if err := m.client.doJSON(http.MethodGet, "/api/nodes/"+url.PathEscape(id), nil, &result); err != nil {
-		return nil, err
-	}
-	return &result, nil
-}
-
-func (m *httpNodeManager) GetRaw(id string) (*WwNode, error) {
-	var result WwNode
-	if err := m.client.doJSON(http.MethodGet, "/api/nodes/"+url.PathEscape(id)+"/raw", nil, &result); err != nil {
-		return nil, err
-	}
-	return &result, nil
-}
-
-func (m *httpNodeManager) GetFields(id string) ([]NodeField, error) {
-	var result []NodeField
-	if err := m.client.doJSON(http.MethodGet, "/api/nodes/"+url.PathEscape(id)+"/fields", nil, &result); err != nil {
-		return nil, err
-	}
-	return result, nil
-}
-
-func (m *httpNodeManager) GetOverlayInfo(id string) (*NodeOverlayInfo, error) {
-	var result NodeOverlayInfo
-	if err := m.client.doJSON(http.MethodGet, "/api/nodes/"+url.PathEscape(id)+"/overlays", nil, &result); err != nil {
-		return nil, err
-	}
-	return &result, nil
-}
-
-func (m *httpNodeManager) BuildOverlays(id string) error {
-	return m.client.doAction(http.MethodPost, "/api/nodes/"+url.PathEscape(id)+"/overlays/build", nil)
-}
-
-func (m *httpNodeManager) BuildAllOverlays() error {
-	return m.client.doAction(http.MethodPost, "/api/nodes/overlays/build", nil)
-}
-
-func (m *httpNodeManager) Add(id string, node *WwNode) error {
-	body, err := jsonBody(struct {
-		Node *WwNode `json:"node"`
-	}{Node: node})
-	if err != nil {
-		return err
-	}
-	return m.client.doAction(http.MethodPut, "/api/nodes/"+url.PathEscape(id), body)
-}
-
-func (m *httpNodeManager) Update(id string, node *WwNode) error {
-	body, err := jsonBody(struct {
-		Node *WwNode `json:"node"`
-	}{Node: node})
-	if err != nil {
-		return err
-	}
-	return m.client.doAction(http.MethodPatch, "/api/nodes/"+url.PathEscape(id), body)
-}
-
-func (m *httpNodeManager) Delete(id string) error {
-	return m.client.doAction(http.MethodDelete, "/api/nodes/"+url.PathEscape(id), nil)
-}
-
-// ---------- Profile Manager ----------
-
-type httpProfileManager struct {
-	client *HTTPClient
-}
-
-func (m *httpProfileManager) List() (map[string]*WwProfile, error) {
-	var result map[string]*WwProfile
-	if err := m.client.doJSON(http.MethodGet, "/api/profiles/", nil, &result); err != nil {
-		return nil, err
-	}
-	return result, nil
-}
-
-func (m *httpProfileManager) Get(id string) (*WwProfile, error) {
-	var result WwProfile
-	if err := m.client.doJSON(http.MethodGet, "/api/profiles/"+url.PathEscape(id), nil, &result); err != nil {
-		return nil, err
-	}
-	return &result, nil
-}
-
-func (m *httpProfileManager) Add(id string, profile *WwProfile) error {
-	body, err := jsonBody(struct {
-		Profile *WwProfile `json:"profile"`
-	}{Profile: profile})
-	if err != nil {
-		return err
-	}
-	return m.client.doAction(http.MethodPut, "/api/profiles/"+url.PathEscape(id), body)
-}
-
-func (m *httpProfileManager) Update(id string, profile *WwProfile) error {
-	body, err := jsonBody(struct {
-		Profile *WwProfile `json:"profile"`
-	}{Profile: profile})
-	if err != nil {
-		return err
-	}
-	return m.client.doAction(http.MethodPatch, "/api/profiles/"+url.PathEscape(id), body)
-}
-
-func (m *httpProfileManager) Delete(id string) error {
-	return m.client.doAction(http.MethodDelete, "/api/profiles/"+url.PathEscape(id), nil)
-}
-
-// ---------- Image Manager ----------
-
-type httpImageManager struct {
-	client *HTTPClient
-}
-
-func (m *httpImageManager) List() (map[string]*WwImage, error) {
-	var result map[string]*WwImage
-	if err := m.client.doJSON(http.MethodGet, "/api/images/", nil, &result); err != nil {
-		return nil, err
-	}
-	return result, nil
-}
-
-func (m *httpImageManager) Get(name string) (*WwImage, error) {
-	var result WwImage
-	if err := m.client.doJSON(http.MethodGet, "/api/images/"+url.PathEscape(name), nil, &result); err != nil {
-		return nil, err
-	}
-	return &result, nil
-}
-
-func (m *httpImageManager) Build(name string) error {
-	return m.client.doAction(http.MethodPost, "/api/images/"+url.PathEscape(name)+"/build", nil)
-}
-
-func (m *httpImageManager) Import(name string, source string) error {
-	body, err := jsonBody(map[string]string{"source": source})
-	if err != nil {
-		return err
-	}
-	return m.client.doAction(http.MethodPost, "/api/images/"+url.PathEscape(name)+"/import", body)
-}
-
-func (m *httpImageManager) Update(name string, newName string) error {
-	body, err := jsonBody(map[string]string{"name": newName})
-	if err != nil {
-		return err
-	}
-	return m.client.doAction(http.MethodPatch, "/api/images/"+url.PathEscape(name), body)
-}
-
-func (m *httpImageManager) Delete(name string) error {
-	return m.client.doAction(http.MethodDelete, "/api/images/"+url.PathEscape(name), nil)
-}
-
-// ---------- Overlay Manager ----------
-
-type httpOverlayManager struct {
-	client *HTTPClient
-}
-
-func (m *httpOverlayManager) List() (map[string]*WwOverlay, error) {
-	var result map[string]*WwOverlay
-	if err := m.client.doJSON(http.MethodGet, "/api/overlays/", nil, &result); err != nil {
-		return nil, err
-	}
-	return result, nil
-}
-
-func (m *httpOverlayManager) Get(name string) (*WwOverlay, error) {
-	var result map[string]*WwOverlay
-	if err := m.client.doJSON(http.MethodGet, "/api/overlays/"+url.PathEscape(name), nil, &result); err != nil {
-		return nil, err
-	}
-	overlay, ok := result[name]
-	if !ok {
-		for _, v := range result {
-			return v, nil
-		}
-		return nil, errs.NewNotFoundError(nil, fmt.Sprintf("overlay %q not in response", name))
-	}
-	return overlay, nil
-}
-
-func (m *httpOverlayManager) GetFile(name, path, renderNode string) (*OverlayFile, error) {
-	params := url.Values{}
-	params.Set("path", path)
-	if renderNode != "" {
-		params.Set("render", renderNode)
-	}
-	var result OverlayFile
-	if err := m.client.doJSON(http.MethodGet, "/api/overlays/"+url.PathEscape(name)+"/file?"+params.Encode(), nil, &result); err != nil {
-		return nil, err
-	}
-	return &result, nil
-}
-
-func (m *httpOverlayManager) Create(name string) error {
-	return m.client.doAction(http.MethodPut, "/api/overlays/"+url.PathEscape(name), nil)
-}
-
-func (m *httpOverlayManager) AddFile(name, path, content string) error {
-	params := url.Values{}
-	params.Set("path", path)
-	body := strings.NewReader(content)
-	return m.client.doAction(http.MethodPut, "/api/overlays/"+url.PathEscape(name)+"/file?"+params.Encode(), body)
-}
-
-func (m *httpOverlayManager) Delete(name string, force bool) error {
-	path := "/api/overlays/" + url.PathEscape(name)
-	if force {
-		path += "?force=true"
-	}
-	return m.client.doAction(http.MethodDelete, path, nil)
-}
-
-func (m *httpOverlayManager) DeleteFile(name, path string) error {
-	params := url.Values{}
-	params.Set("path", path)
-	return m.client.doAction(http.MethodDelete, "/api/overlays/"+url.PathEscape(name)+"/file?"+params.Encode(), nil)
 }
 
 // ---------- No-op Power Manager ----------

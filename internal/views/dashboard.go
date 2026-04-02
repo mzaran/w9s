@@ -12,15 +12,19 @@ import (
 	"github.com/mzaran/w9s/internal/dao"
 )
 
+// HeaderMetricsFunc is a callback to update header metrics.
+type HeaderMetricsFunc func(nodes, up, images, profiles, overlays int)
+
 // DashboardView shows a cluster summary with aggregated statistics.
 type DashboardView struct {
 	BaseView
 
-	client    dao.WarewulfClient
-	container *tview.Flex
-	summary   *tview.TextView
-	nodeStats *tview.TextView
-	imageList *tview.TextView
+	client           dao.WarewulfClient
+	container        *tview.Flex
+	summary          *tview.TextView
+	nodeStats        *tview.TextView
+	imageList        *tview.TextView
+	headerMetricsFn  HeaderMetricsFunc
 }
 
 // NewDashboardView creates a new dashboard view.
@@ -31,6 +35,11 @@ func NewDashboardView(app *tview.Application, client dao.WarewulfClient) *Dashbo
 	}
 	dv.SetApp(app)
 	return dv
+}
+
+// SetHeaderMetricsFn sets the callback used to update header metrics after refresh.
+func (dv *DashboardView) SetHeaderMetricsFn(fn HeaderMetricsFunc) {
+	dv.headerMetricsFn = fn
 }
 
 func (dv *DashboardView) Init(ctx context.Context) error {
@@ -104,6 +113,23 @@ func (dv *DashboardView) Refresh() error {
 			dv.renderSummary(nodes, nodeErr, images, imgErr, overlays, ovlErr)
 			dv.renderNodeStats(nodes)
 			dv.renderImageList(images)
+
+			// Update header metrics.
+			if dv.headerMetricsFn != nil {
+				nodeCount := 0
+				if nodeErr == nil {
+					nodeCount = len(nodes)
+				}
+				imgCount := 0
+				if imgErr == nil {
+					imgCount = len(images)
+				}
+				ovlCount := 0
+				if ovlErr == nil {
+					ovlCount = len(overlays)
+				}
+				dv.headerMetricsFn(nodeCount, nodeCount, imgCount, 0, ovlCount)
+			}
 		})
 	}()
 

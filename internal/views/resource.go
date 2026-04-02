@@ -284,6 +284,11 @@ func (rv *ResourceView[T]) handleAction(event *tcell.EventKey) *tcell.EventKey {
 		if action.Key != ch {
 			continue
 		}
+		// Block destructive actions in read-only mode.
+		if rv.IsReadOnly() && action.Destructive {
+			rv.ShowStatusError("Action blocked: read-only mode")
+			return nil
+		}
 		name, item, ok := rv.selectedItem()
 		if !ok {
 			return nil

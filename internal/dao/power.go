@@ -9,21 +9,32 @@ import (
 	"time"
 )
 
-const defaultPowerTimeout = 30 * time.Second
+// DefaultPowerTimeout is the default timeout for power operations.
+// It can be overridden via the config powerTimeout field.
+var DefaultPowerTimeout = 30 * time.Second
 
 // WwctlPowerManager implements PowerManager by shelling out to the wwctl CLI.
 type WwctlPowerManager struct {
 	wwctlPath string
+	timeout   time.Duration
 }
 
 // NewWwctlPowerManager creates a new power manager. It returns an error if
 // the wwctl binary cannot be found on PATH.
 func NewWwctlPowerManager() (*WwctlPowerManager, error) {
+	return NewWwctlPowerManagerWithTimeout(DefaultPowerTimeout)
+}
+
+// NewWwctlPowerManagerWithTimeout creates a new power manager with a custom timeout.
+func NewWwctlPowerManagerWithTimeout(timeout time.Duration) (*WwctlPowerManager, error) {
 	path, err := exec.LookPath("wwctl")
 	if err != nil {
 		return nil, fmt.Errorf("wwctl not found in PATH: %w", err)
 	}
-	return &WwctlPowerManager{wwctlPath: path}, nil
+	if timeout <= 0 {
+		timeout = DefaultPowerTimeout
+	}
+	return &WwctlPowerManager{wwctlPath: path, timeout: timeout}, nil
 }
 
 // Status returns the power status string for the given node.
@@ -61,7 +72,7 @@ func (p *WwctlPowerManager) Reset(nodeID string) error {
 
 // run executes a wwctl power subcommand and returns its stdout.
 func (p *WwctlPowerManager) run(action, nodeID string) (string, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), defaultPowerTimeout)
+	ctx, cancel := context.WithTimeout(context.Background(), p.timeout)
 	defer cancel()
 
 	cmd := exec.CommandContext(ctx, p.wwctlPath, "power", action, nodeID)
@@ -72,7 +83,7 @@ func (p *WwctlPowerManager) run(action, nodeID string) (string, error) {
 
 	err := cmd.Run()
 	if ctx.Err() == context.DeadlineExceeded {
-		return "", fmt.Errorf("wwctl power %s %s: timed out after %s", action, nodeID, defaultPowerTimeout)
+		return "", fmt.Errorf("wwctl power %s %s: timed out after %s", action, nodeID, p.timeout)
 	}
 	if err != nil {
 		errMsg := strings.TrimSpace(stderr.String())

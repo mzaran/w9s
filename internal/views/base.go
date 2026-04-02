@@ -42,6 +42,7 @@ type BaseView struct {
 	focused      atomic.Bool
 	lastErrMu    sync.Mutex
 	lastErr      error
+	readOnly       bool
 	statusMsgFn    func(msg string, isError bool)
 	showSpinnerFn  func(msg string)
 	hideSpinnerFn  func()
@@ -102,6 +103,12 @@ func (b *BaseView) SetPages(pages *tview.Pages) { b.pages = pages }
 
 // SetViewManager sets the view manager reference.
 func (b *BaseView) SetViewManager(mgr *ViewManager) { b.viewMgr = mgr }
+
+// SetReadOnly sets the read-only flag on the view.
+func (b *BaseView) SetReadOnly(ro bool) { b.readOnly = ro }
+
+// IsReadOnly reports whether the view is in read-only mode.
+func (b *BaseView) IsReadOnly() bool { return b.readOnly }
 
 // App returns the tview application.
 func (b *BaseView) App() *tview.Application { return b.app }
