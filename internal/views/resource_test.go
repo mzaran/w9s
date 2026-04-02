@@ -90,7 +90,7 @@ func TestResourceViewHintsIncludeActions(t *testing.T) {
 	hints := rv.Hints()
 
 	// Should include default hints plus our "Delete" action.
-	assert.Contains(t, hints, "/ Filter")
+	assert.Contains(t, hints, "/ Filter (fuzzy)")
 	assert.Contains(t, hints, "Enter Detail")
 	assert.Contains(t, hints, "r Refresh")
 	assert.Contains(t, hints, "d Delete")

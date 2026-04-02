@@ -44,7 +44,7 @@ func TestPowerViewHints(t *testing.T) {
 	assert.Contains(t, hints, "c Cycle")
 	assert.Contains(t, hints, "r Reset")
 	assert.Contains(t, hints, "s Status")
-	assert.Contains(t, hints, "/ Filter")
+	assert.Contains(t, hints, "/ Filter (fuzzy)")
 }
 
 func TestPowerViewRenderAfterInit(t *testing.T) {
