@@ -11,7 +11,7 @@
   <a href="https://opensource.org/licenses/Apache-2.0"><img src="https://img.shields.io/badge/License-Apache_2.0-blue.svg?style=flat-square" alt="License"></a>
 </p>
 
-w9s provides a real-time terminal UI for Warewulf cluster provisioning and management. Add nodes, manage profiles, import images, browse overlays, render templates, export data, and switch between clusters — all from your terminal. Inspired by [k9s](https://k9scli.io/) and [s9s](https://github.com/jontk/s9s).
+w9s provides a real-time terminal UI for [Warewulf](https://github.com/warewulf/warewulf) cluster provisioning and management. It connects to the Warewulf v4 REST API (v4.4+, recommended v4.6.1+). Add nodes, manage profiles, import images, browse overlays, render templates, export data, and switch between clusters — all from your terminal. Inspired by [k9s](https://k9scli.io/) and [s9s](https://github.com/jontk/s9s).
 
 <p align="center">
   <img src="docs/screenshots/w9s-demo.gif" alt="w9s demo" width="800">
@@ -176,13 +176,13 @@ w9s version                            # show version
 
 ## Warewulf Server Setup
 
-w9s connects to the Warewulf v4 REST API (v4.6.1+). Enable it on your server:
+w9s connects to the [Warewulf v4 REST API](https://github.com/warewulf/warewulf) (v4.4+, recommended v4.6.1+). Enable it on your server:
 
 ```yaml
 # /etc/warewulf/warewulf.conf
 api:
   enabled: true
-  tls: false
+  tls: false          # set to true on v4.7+ for TLS
   allowed subnets:
     - "192.168.1.0/24"
     - "127.0.0.0/8"
@@ -199,6 +199,8 @@ sudo systemctl restart warewulfd
 # Verify
 curl -u admin:password http://localhost:9873/api/nodes/
 ```
+
+> **TLS (Warewulf v4.7+):** Set `tls: true` in warewulf.conf and configure certificates. w9s will connect over HTTPS automatically. Use `--insecure` to skip certificate verification for self-signed certs.
 
 ## Development
 

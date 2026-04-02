@@ -1,0 +1,52 @@
+#!/usr/bin/expect -f
+# Scripted w9s demo using expect for proper PTY key delivery
+
+set timeout 60
+set env(W9S_ENABLE_MOCK) 1
+set env(TERM) xterm-256color
+
+spawn ./build/w9s --mock
+
+# Wait for dashboard data to render (not just the layout)
+expect "Total Nodes"
+sleep 2
+
+# Nodes view
+send "2"
+expect "Cluster"
+sleep 2
+
+# Sort
+send "s"
+sleep 1.5
+
+# Detail view
+send "\r"
+sleep 2
+send "\033"
+sleep 1
+
+# Profiles
+send "3"
+expect "PROFILE"
+sleep 2
+
+# Images
+send "4"
+expect "SIZE"
+sleep 2
+
+# Overlays
+send "5"
+expect "OVERLAY"
+sleep 2
+
+# Back to dashboard
+send "1"
+expect "Total Nodes"
+sleep 2
+
+# Quit
+send "q"
+
+expect eof
