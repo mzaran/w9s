@@ -30,6 +30,9 @@ func NewNodesView(app *tview.Application, client dao.WarewulfClient) View {
 				return nodeStatus(n)
 			}},
 		},
+		FetchRaw: func(name string) (any, error) {
+			return client.Nodes().Get(name)
+		},
 		ExtraHints: []string{"a Add", "e Edit"},
 		OnKeyExtra: func(rv *ResourceView[*dao.WwNode], event *tcell.EventKey) *tcell.EventKey {
 			if event.Key() != tcell.KeyRune {

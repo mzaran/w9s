@@ -36,6 +36,9 @@ func NewImagesView(app *tview.Application, client dao.WarewulfClient) View {
 				return "no"
 			}},
 		},
+		FetchRaw: func(name string) (any, error) {
+			return client.Images().Get(name)
+		},
 		ExtraHints: []string{"i Import"},
 		OnKeyExtra: func(rv *ResourceView[*dao.WwImage], event *tcell.EventKey) *tcell.EventKey {
 			if event.Key() == tcell.KeyRune && event.Rune() == 'i' {

@@ -12,6 +12,7 @@ import (
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 	"github.com/sahilm/fuzzy"
+	"gopkg.in/yaml.v3"
 
 	"github.com/mzaran/w9s/internal/ui"
 )
@@ -39,8 +40,9 @@ type ResourceViewConfig[T any] struct {
 	OnKeyExtra func(rv *ResourceView[T], event *tcell.EventKey) *tcell.EventKey // optional extra key handling
 	ExtraHints []string                                                          // additional hints for OnKeyExtra actions
 	Actions    []Action[T]
-	Detail  func(name string, item T) string
-	Filter  func(name string, item T, query string) bool
+	Detail     func(name string, item T) string
+	Filter     func(name string, item T, query string) bool
+	FetchRaw   func(name string) (any, error) // optional: fetch raw config for YAML view
 }
 
 // ResourceView is a generic, DRY view for any Warewulf resource type.
@@ -123,6 +125,9 @@ func (rv *ResourceView[T]) Hints() []string {
 		"x Export",
 		"Enter Detail",
 		"r Refresh",
+	}
+	if rv.config.FetchRaw != nil {
+		hints = append(hints, "y YAML")
 	}
 	hints = append(hints, rv.config.ExtraHints...)
 	for _, a := range rv.config.Actions {
@@ -228,6 +233,9 @@ func (rv *ResourceView[T]) OnKey(event *tcell.EventKey) *tcell.EventKey {
 			return nil
 		case 'x':
 			rv.exportCSV()
+			return nil
+		case 'y':
+			rv.showRawYAML()
 			return nil
 		default:
 			if rv.config.OnKeyExtra != nil {
@@ -548,6 +556,36 @@ func (rv *ResourceView[T]) showDetail(row int) {
 	ui.ShowDetail(rv.Pages(), rv.App(), "detail", key, text, func() {
 		rv.closeModal()
 	})
+}
+
+func (rv *ResourceView[T]) showRawYAML() {
+	if rv.config.FetchRaw == nil {
+		return
+	}
+	name, _, ok := rv.selectedItem()
+	if !ok {
+		return
+	}
+
+	go func() {
+		raw, err := rv.config.FetchRaw(name)
+		if err != nil {
+			rv.ShowStatusError("Failed to fetch config: " + err.Error())
+			return
+		}
+		data, err := yaml.Marshal(raw)
+		if err != nil {
+			rv.ShowStatusError("Failed to format YAML: " + err.Error())
+			return
+		}
+
+		rv.App().QueueUpdateDraw(func() {
+			rv.modalOpen = true
+			ui.ShowDetail(rv.Pages(), rv.App(), "detail", name+" (YAML)", string(data), func() {
+				rv.closeModal()
+			})
+		})
+	}()
 }
 
 func (rv *ResourceView[T]) closeModal() {
