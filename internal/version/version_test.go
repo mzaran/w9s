@@ -8,68 +8,45 @@ import (
 )
 
 func TestInfoDefaults(t *testing.T) {
-	// Save originals and restore after test.
 	origVersion := version.Version
-	origCommit := version.Commit
-	origDate := version.Date
-	origBuiltBy := version.BuiltBy
 	t.Cleanup(func() {
 		version.Version = origVersion
-		version.Commit = origCommit
-		version.Date = origDate
-		version.BuiltBy = origBuiltBy
 	})
 
 	version.Version = "dev"
-	version.Commit = "none"
-	version.Date = "unknown"
-	version.BuiltBy = "unknown"
-
-	info := version.Info()
-	assert.Contains(t, info, "w9s")
-	assert.Contains(t, info, "dev")
-	assert.Contains(t, info, "none")
-	assert.Contains(t, info, "unknown")
+	assert.Equal(t, "dev", version.Info())
 }
 
 func TestInfoReflectsSetValues(t *testing.T) {
 	origVersion := version.Version
-	origCommit := version.Commit
-	origDate := version.Date
-	origBuiltBy := version.BuiltBy
 	t.Cleanup(func() {
 		version.Version = origVersion
-		version.Commit = origCommit
-		version.Date = origDate
-		version.BuiltBy = origBuiltBy
 	})
 
 	version.Version = "1.2.3"
-	version.Commit = "abc1234"
-	version.Date = "2025-01-15"
-	version.BuiltBy = "goreleaser"
-
-	info := version.Info()
-	assert.Equal(t, "w9s 1.2.3 (commit: abc1234, built: 2025-01-15 by goreleaser)", info)
+	assert.Equal(t, "1.2.3", version.Info())
 }
 
 func TestInfoFormat(t *testing.T) {
 	origVersion := version.Version
-	origCommit := version.Commit
-	origDate := version.Date
-	origBuiltBy := version.BuiltBy
 	t.Cleanup(func() {
 		version.Version = origVersion
-		version.Commit = origCommit
-		version.Date = origDate
-		version.BuiltBy = origBuiltBy
 	})
 
 	version.Version = "v0.1.0"
-	version.Commit = "deadbeef"
-	version.Date = "2025-06-01"
-	version.BuiltBy = "ci"
+	assert.Equal(t, "v0.1.0", version.Info())
+}
 
-	expected := "w9s v0.1.0 (commit: deadbeef, built: 2025-06-01 by ci)"
-	assert.Equal(t, expected, version.Info())
+func TestLogoSmall(t *testing.T) {
+	assert.Len(t, version.LogoSmall, 6, "LogoSmall should have 6 lines")
+	// Verify the logo contains expected characters.
+	joined := ""
+	for _, line := range version.LogoSmall {
+		joined += line
+	}
+	assert.Contains(t, joined, "___", "LogoSmall should contain underscores from ASCII art")
+}
+
+func TestGitRepo(t *testing.T) {
+	assert.Equal(t, "github.com/mzaran/w9s", version.GitRepo)
 }

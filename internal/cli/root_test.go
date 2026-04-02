@@ -47,6 +47,17 @@ func TestRootCmd_HasVersionSubcommand(t *testing.T) {
 	assert.True(t, found, "expected rootCmd to have a 'version' subcommand")
 }
 
+func TestRootCmd_HasInfoSubcommand(t *testing.T) {
+	var found bool
+	for _, cmd := range rootCmd.Commands() {
+		if cmd.Use == "info" {
+			found = true
+			break
+		}
+	}
+	assert.True(t, found, "expected rootCmd to have an 'info' subcommand")
+}
+
 func TestVersionCmd_Use(t *testing.T) {
 	assert.Equal(t, "version", versionCmd.Use)
 	assert.Equal(t, "Print the version information", versionCmd.Short)

@@ -46,6 +46,7 @@ func init() {
 	rootCmd.PersistentFlags().BoolVar(&readOnly, "readonly", false, "disable all destructive actions (add, delete, edit, build, import)")
 
 	rootCmd.AddCommand(versionCmd)
+	rootCmd.AddCommand(infoCmd)
 }
 
 // Execute runs the root command.

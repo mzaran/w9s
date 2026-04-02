@@ -1,17 +1,26 @@
 // Package version holds build-time version information injected via ldflags.
 package version
 
-import "fmt"
+const GitRepo = "github.com/mzaran/w9s"
 
 // These variables are set at build time via -ldflags.
 var (
 	Version = "dev"
 	Commit  = "none"
 	Date    = "unknown"
-	BuiltBy = "unknown"
 )
 
-// Info returns a formatted version string.
+// LogoSmall is the W9S ASCII art logo (Graffiti font + wolf face).
+var LogoSmall = []string{
+	`__      __  ________  _________`,
+	`/  \    /  \/   __   \/   _____/   /\_/\`,
+	`\   \/\/   /\____    /\_____  \   ( o.o )`,
+	` \        /    /    / /        \   > ^ <`,
+	`  \__/\  /    /____/ /_______  /`,
+	`       \/                    \/`,
+}
+
+// Info returns the version string.
 func Info() string {
-	return fmt.Sprintf("w9s %s (commit: %s, built: %s by %s)", Version, Commit, Date, BuiltBy)
+	return Version
 }
