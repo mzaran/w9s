@@ -14,6 +14,7 @@ import (
 type Config struct {
 	RefreshRate    string         `yaml:"refreshRate" mapstructure:"refreshRate"`
 	DefaultCluster string         `yaml:"defaultCluster" mapstructure:"defaultCluster"`
+	ReadOnly       bool           `yaml:"readOnly" mapstructure:"readOnly"`
 	Clusters       []ClusterEntry `yaml:"clusters" mapstructure:"clusters"`
 	UI             UIConfig       `yaml:"ui" mapstructure:"ui"`
 
@@ -29,11 +30,12 @@ type ClusterEntry struct {
 
 // ClusterConfig holds connection details for a single Warewulf server.
 type ClusterConfig struct {
-	Endpoint string `yaml:"endpoint" mapstructure:"endpoint"`
-	Username string `yaml:"username" mapstructure:"username"`
-	Password string `yaml:"password" mapstructure:"password"`
-	Insecure bool   `yaml:"insecure" mapstructure:"insecure"`
-	Timeout  string `yaml:"timeout" mapstructure:"timeout"`
+	Endpoint     string `yaml:"endpoint" mapstructure:"endpoint"`
+	Username     string `yaml:"username" mapstructure:"username"`
+	Password     string `yaml:"password" mapstructure:"password"`
+	Insecure     bool   `yaml:"insecure" mapstructure:"insecure"`
+	Timeout      string `yaml:"timeout" mapstructure:"timeout"`
+	PowerTimeout string `yaml:"powerTimeout" mapstructure:"powerTimeout"`
 }
 
 // UIConfig holds user-interface preferences.

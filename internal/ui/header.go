@@ -19,6 +19,7 @@ type Header struct {
 	current  string
 	endpoint string
 	version  string
+	readOnly bool
 }
 
 // NewHeader creates a new Design C header with logo, info panel, and tabs.
@@ -72,6 +73,9 @@ func (h *Header) renderInfo(nodes, up, images, profiles, overlays int) {
 
 	fmt.Fprintf(h.info, "[#%06x]● Connected[-]  [white]%s[-]  [#%06x]%s[-]",
 		conn, h.endpoint, dim, h.version)
+	if h.readOnly {
+		fmt.Fprintf(h.info, "  [red::b][READ-ONLY][-:-:-]")
+	}
 	if nodes > 0 || images > 0 || profiles > 0 {
 		fmt.Fprintf(h.info, "    [#%06x]Nodes:[-] [#%06x]%d[-][#%06x]/%d[-]",
 			lbl, val, up, lbl, nodes)
@@ -90,6 +94,12 @@ func (h *Header) SetViews(views []string) {
 func (h *Header) SetCurrentView(name string) {
 	h.current = name
 	h.renderTabs()
+}
+
+// SetReadOnly enables or disables the read-only indicator.
+func (h *Header) SetReadOnly(ro bool) {
+	h.readOnly = ro
+	h.renderInfo(0, 0, 0, 0, 0)
 }
 
 // SetClusterName is a compatibility method — calls SetClusterInfo.

@@ -101,7 +101,7 @@ const helpText = `[yellow]Global Keys[-]
 [yellow]Images View[-]
 
   [green]b[-]            Build image
-  [green]i[-]            Import image (TODO)
+  [green]i[-]            Import image
   [green]d[-]            Delete image (with confirmation)
 
 [yellow]Power View[-]
