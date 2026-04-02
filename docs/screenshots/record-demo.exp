@@ -1,52 +1,68 @@
 #!/usr/bin/expect -f
-# Scripted w9s demo using expect for proper PTY key delivery
+# Scripted w9s demo for asciinema recording
+# Each send is followed by expect to capture the redraw output
 
-set timeout 60
+set timeout 10
 set env(W9S_ENABLE_MOCK) 1
 set env(TERM) xterm-256color
 
 spawn ./build/w9s --mock
 
-# Wait for dashboard data to render (not just the layout)
+# Wait for dashboard to fully render
 expect "Total Nodes"
-sleep 2
+sleep 3
 
-# Nodes view
+# 2 - Nodes view
 send "2"
 expect "Cluster"
 sleep 2
 
 # Sort
 send "s"
+expect "Name"
 sleep 1.5
 
 # Detail view
 send "\r"
+expect -re ".+"
 sleep 2
 send "\033"
+expect -re ".+"
 sleep 1
 
-# Profiles
+# 3 - Profiles
 send "3"
-expect "PROFILE"
-sleep 2
+expect "Inheritance"
+sleep 3
 
-# Images
+# 4 - Images
 send "4"
-expect "SIZE"
-sleep 2
+expect "Size"
+sleep 3
 
-# Overlays
+# 5 - Overlays
 send "5"
-expect "OVERLAY"
+expect -re ".+"
 sleep 2
 
-# Back to dashboard
+# Drill into overlay
+send "\r"
+expect -re ".+"
+sleep 2
+send "\033"
+expect -re ".+"
+sleep 1
+
+# 6 - Power
+send "6"
+expect -re ".+"
+sleep 2
+
+# 1 - Dashboard
 send "1"
 expect "Total Nodes"
 sleep 2
 
 # Quit
 send "q"
-
 expect eof

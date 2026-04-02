@@ -1,68 +1,60 @@
 #!/bin/bash
-# Scripted w9s demo for asciinema recording
-# Uses a FIFO to feed keystrokes to tview with delays
+# Record w9s demo via tmux inside asciinema
+# Usage: asciinema rec --cols 120 --rows 35 -c './docs/screenshots/record-demo.sh' demo.cast
 set -e
 
 cd "$(dirname "$0")/../.."
-
 export W9S_ENABLE_MOCK=1
-export TERM=xterm-256color
-export COLUMNS=120
-export LINES=35
+SESSION="w9s-demo-$$"
 
-FIFO=$(mktemp -u /tmp/w9s-demo-XXXXXX)
-mkfifo "$FIFO"
+# Start tmux session running w9s
+tmux new-session -d -s "$SESSION" -x 120 -y 35 "./build/w9s --mock"
+trap "tmux kill-session -t '$SESSION' 2>/dev/null" EXIT
 
-# Feed keystrokes in background
-(
-    sleep 3          # Dashboard loads
+# Attach to show the output in asciinema's terminal
+tmux attach-session -t "$SESSION" &
+ATTACH_PID=$!
+sleep 0.5
 
-    echo -n "2"      # Nodes view
-    sleep 2
+# Helper to send keys with visible pauses
+key() {
+    tmux send-keys -t "$SESSION" "$1"
+    sleep "${2:-2}"
+}
 
-    echo -n "/"      # Open filter
-    sleep 0.5
-    echo -n "compute"
-    sleep 1.5
-    printf '\x1b'    # Escape - close filter
-    sleep 0.5
+# Dashboard loads
+sleep 3
 
-    echo -n "s"      # Sort
-    sleep 1
-    echo -n "s"      # Sort again
-    sleep 1
+# 2 - Nodes
+key "2" 2
 
-    printf '\r'       # Enter - detail
-    sleep 2
-    printf '\x1b'    # Escape - back
-    sleep 0.5
+# Sort
+key "s" 1.5
 
-    echo -n "3"      # Profiles
-    sleep 2.5
+# Detail view
+key "Enter" 2
+key "Escape" 1
 
-    echo -n "4"      # Images
-    sleep 2.5
+# 3 - Profiles
+key "3" 3
 
-    echo -n "5"      # Overlays
-    sleep 2
-    printf '\r'       # Enter - drill in
-    sleep 2
-    printf '\x1b'    # Escape - back
-    sleep 0.5
+# 4 - Images
+key "4" 3
 
-    echo -n "6"      # Power
-    sleep 2
+# 5 - Overlays
+key "5" 2
 
-    echo -n "1"      # Dashboard
-    sleep 2
+# Drill into overlay
+key "Enter" 2
+key "Escape" 1
 
-    echo -n "q"      # Quit
-    sleep 0.5
-) > "$FIFO" &
-KEYS_PID=$!
+# 6 - Power
+key "6" 2
 
-# Run w9s reading from the FIFO
-./build/w9s --mock < "$FIFO"
+# 1 - Dashboard
+key "1" 2
 
-wait $KEYS_PID 2>/dev/null
-rm -f "$FIFO"
+# Quit
+key "q" 0.5
+
+wait $ATTACH_PID 2>/dev/null || true
