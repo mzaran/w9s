@@ -8,7 +8,7 @@ LDFLAGS=-ldflags "-X $(VERSION_PKG).Version=$(VERSION) -X $(VERSION_PKG).Commit=
 
 .DEFAULT_GOAL := help
 
-.PHONY: build clean test test-unit test-integration lint fmt vet ci dev mock help
+.PHONY: build clean test test-unit test-integration test-smoke lint fmt vet ci dev mock coverage help
 
 ## build: Build the w9s binary
 build:
@@ -30,6 +30,16 @@ test-unit:
 ## test-integration: Run integration tests (requires W9S_INTEGRATION_TESTS=1)
 test-integration:
 	W9S_INTEGRATION_TESTS=1 go test -timeout 45m -v ./test/integration/...
+
+## test-smoke: Run smoke tests in mock mode (requires tmux)
+test-smoke: build
+	W9S_ENABLE_MOCK=1 ./test/smoke/verify-views.sh mock
+
+## coverage: Generate HTML coverage report
+coverage:
+	go test -coverprofile=coverage.out ./internal/... ./pkg/...
+	go tool cover -html=coverage.out -o coverage.html
+	@echo "Coverage report: coverage.html"
 
 ## lint: Run golangci-lint
 lint:
@@ -63,6 +73,8 @@ help:
 	@echo "  test             Run all tests"
 	@echo "  test-unit        Run unit tests"
 	@echo "  test-integration Run integration tests"
+	@echo "  test-smoke       Run smoke tests (mock mode, needs tmux)"
+	@echo "  coverage         Generate HTML coverage report"
 	@echo "  lint             Run linter"
 	@echo "  fmt              Format code"
 	@echo "  vet              Run go vet"
