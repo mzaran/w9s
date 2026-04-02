@@ -30,6 +30,8 @@ type Theme struct {
 	TextFg       tcell.Color
 	DimFg        tcell.Color
 	BgColor      tcell.Color
+	BorderColor  tcell.Color
+	AccentColor  tcell.Color
 }
 
 // DefaultTheme is the Design C color palette.
@@ -59,6 +61,8 @@ var DefaultTheme = Theme{
 	TextFg:       tcell.ColorWhite,
 	DimFg:        tcell.NewRGBColor(136, 136, 136),
 	BgColor:      tcell.ColorDefault,
+	BorderColor:  tcell.NewRGBColor(136, 136, 136),
+	AccentColor:  tcell.NewRGBColor(255, 193, 7),
 }
 
 // ColorToHex converts a tcell.Color to a 24-bit hex integer for tview markup.

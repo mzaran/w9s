@@ -82,6 +82,11 @@ func (a *App) Context() context.Context {
 // initUI creates the main layout: header + pages + status bar.
 func (a *App) initUI() {
 	theme := &ui.DefaultTheme
+	if a.config.UI.Skin != "" {
+		if skin, err := ui.LoadSkin(a.config.UI.Skin); err == nil {
+			theme = ui.SkinToTheme(skin)
+		}
+	}
 
 	// Header: info (1 row) + tabs (1 row) = 2 rows.
 	a.header = ui.NewHeader(theme)

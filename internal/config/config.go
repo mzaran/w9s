@@ -38,7 +38,8 @@ type ClusterConfig struct {
 
 // UIConfig holds user-interface preferences.
 type UIConfig struct {
-	EnableMouse bool `yaml:"enableMouse" mapstructure:"enableMouse"`
+	EnableMouse bool   `yaml:"enableMouse" mapstructure:"enableMouse"`
+	Skin        string `yaml:"skin" mapstructure:"skin"`
 }
 
 // Load reads and validates w9s configuration from the given file path,
