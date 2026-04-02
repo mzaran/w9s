@@ -1,31 +1,39 @@
 #!/usr/bin/expect -f
 # Scripted w9s demo for asciinema recording
-# Each send is followed by expect to capture the redraw output
+# Uses content-specific patterns to avoid matching header labels
 
-set timeout 10
+set timeout 60
 set env(W9S_ENABLE_MOCK) 1
 set env(TERM) xterm-256color
 
 spawn ./build/w9s --mock
 
-# Wait for dashboard to fully render
-expect "Total Nodes"
+# Wait for dashboard content (not header "Nodes:" label)
+expect "By Image:"
 sleep 3
 
 # 2 - Nodes view
 send "2"
-expect "Cluster"
+expect "compute"
 sleep 2
 
 # Sort
 send "s"
-expect "Name"
+expect -re ".+"
 sleep 1.5
 
-# Detail view
-send "\r"
+# YAML view of selected node
+send "y"
 expect -re ".+"
-sleep 2
+sleep 3
+send "\033"
+expect -re ".+"
+sleep 1
+
+# Field inheritance view
+send "f"
+expect -re ".+"
+sleep 3
 send "\033"
 expect -re ".+"
 sleep 1
@@ -37,7 +45,7 @@ sleep 3
 
 # 4 - Images
 send "4"
-expect "Size"
+expect "rocky9"
 sleep 3
 
 # 5 - Overlays
@@ -60,7 +68,7 @@ sleep 2
 
 # 1 - Dashboard
 send "1"
-expect "Total Nodes"
+expect "By Image:"
 sleep 2
 
 # Quit
