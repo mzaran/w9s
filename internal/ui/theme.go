@@ -31,7 +31,9 @@ type Theme struct {
 	DimFg        tcell.Color
 	BgColor      tcell.Color
 	BorderColor  tcell.Color
-	AccentColor  tcell.Color
+	AccentColor   tcell.Color
+	CrumbActiveBg tcell.Color // breadcrumb active background
+	CrumbFg       tcell.Color // breadcrumb text color
 }
 
 // DefaultTheme is the Design C color palette.
@@ -62,7 +64,9 @@ var DefaultTheme = Theme{
 	DimFg:        tcell.NewRGBColor(136, 136, 136),
 	BgColor:      tcell.ColorDefault,
 	BorderColor:  tcell.NewRGBColor(136, 136, 136),
-	AccentColor:  tcell.NewRGBColor(255, 193, 7),
+	AccentColor:   tcell.NewRGBColor(255, 193, 7),
+	CrumbActiveBg: tcell.ColorGreen,
+	CrumbFg:       tcell.ColorWhite,
 }
 
 // ColorToHex converts a tcell.Color to a 24-bit hex integer for tview markup.

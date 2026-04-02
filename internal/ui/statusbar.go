@@ -64,12 +64,12 @@ func (s *StatusBar) SetHints(hints []string) {
 
 // ShowError displays a red error flash message that auto-clears after 4 seconds.
 func (s *StatusBar) ShowError(msg string) {
-	s.showFlash("✗ "+msg, s.theme.StatusDown)
+	s.showFlash("ERR: "+msg, s.theme.StatusDown)
 }
 
 // ShowSuccess displays a green success flash message that auto-clears after 4 seconds.
 func (s *StatusBar) ShowSuccess(msg string) {
-	s.showFlash("✓ "+msg, s.theme.StatusReady)
+	s.showFlash("OK: "+msg, s.theme.StatusReady)
 }
 
 func (s *StatusBar) showFlash(msg string, color tcell.Color) {

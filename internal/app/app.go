@@ -25,6 +25,7 @@ type App struct {
 	statusBar     *ui.StatusBar
 	mainLayout    *tview.Flex
 	commandInput  *tview.InputField
+	crumbs        *ui.Crumbs
 	commandActive bool
 	config        *config.Config
 	readOnly      bool
@@ -95,8 +96,11 @@ func (a *App) initUI() {
 		}
 	}
 
-	// Header: info (1 row) + tabs (1 row) = 2 rows.
+	// Header: single row (logo + info).
 	a.header = ui.NewHeader(theme)
+
+	// Breadcrumb bar (1 row).
+	a.crumbs = ui.NewCrumbs(theme)
 
 	// Content pages.
 	a.pages = tview.NewPages()
@@ -119,7 +123,8 @@ func (a *App) initUI() {
 
 	// Main layout: vertical flex.
 	a.mainLayout = tview.NewFlex().SetDirection(tview.FlexRow).
-		AddItem(a.header, 2, 0, false).
+		AddItem(a.header, 1, 0, false).
+		AddItem(a.crumbs, 1, 0, false).
 		AddItem(a.pages, 0, 1, true).
 		AddItem(a.statusBar, 1, 0, false).
 		AddItem(a.commandInput, 0, 0, false)
@@ -134,7 +139,7 @@ func (a *App) updateHeader() {
 	if a.viewMgr == nil {
 		return
 	}
-	a.header.SetCurrentView(a.viewMgr.CurrentViewName())
+	a.crumbs.SetCurrentView(a.viewMgr.CurrentViewName())
 }
 
 // updateStatusBar updates the status bar hints for the current view.
@@ -198,8 +203,6 @@ func (a *App) Run() error {
 		a.switchToView(viewNames[0])
 	}
 
-	// Set the header view tabs.
-	a.header.SetViews(viewNames)
 	a.updateHeader()
 
 	// Run the TUI (blocks).
@@ -285,16 +288,6 @@ func (a *App) initView(v views.View) {
 		})
 		sa.SetHideSpinnerFn(func() {
 			a.statusBar.HideSpinner()
-		})
-	}
-
-	// Wire header metrics callback for dashboard view.
-	type headerMetricsAware interface {
-		SetHeaderMetricsFn(func(nodes, up, images, profiles, overlays int))
-	}
-	if hma, ok := v.(headerMetricsAware); ok {
-		hma.SetHeaderMetricsFn(func(nodes, up, images, profiles, overlays int) {
-			a.header.SetMetrics(nodes, up, images, profiles, overlays)
 		})
 	}
 

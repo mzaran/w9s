@@ -117,6 +117,10 @@ func SkinToTheme(s *Skin) *Theme {
 		theme.AccentColor = parseColor(s.Accent)
 		theme.HotkeyFg = parseColor(s.Accent)
 		theme.StatusPending = parseColor(s.Accent)
+		theme.CrumbActiveBg = parseColor(s.Accent)
+	}
+	if s.Header.Foreground != "" {
+		theme.CrumbFg = parseColor(s.Header.Foreground)
 	}
 	return &theme
 }

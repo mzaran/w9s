@@ -23,28 +23,6 @@ func TestHeaderSetClusterInfo(t *testing.T) {
 	})
 }
 
-func TestHeaderSetMetrics(t *testing.T) {
-	h := ui.NewHeader(&ui.DefaultTheme)
-	assert.NotPanics(t, func() {
-		h.SetMetrics(10, 8, 2, 3, 4)
-	})
-}
-
-func TestHeaderSetViews(t *testing.T) {
-	h := ui.NewHeader(&ui.DefaultTheme)
-	assert.NotPanics(t, func() {
-		h.SetViews([]string{"nodes", "images", "profiles", "overlays"})
-	})
-}
-
-func TestHeaderSetCurrentView(t *testing.T) {
-	h := ui.NewHeader(&ui.DefaultTheme)
-	h.SetViews([]string{"nodes", "images", "profiles"})
-	assert.NotPanics(t, func() {
-		h.SetCurrentView("images")
-	})
-}
-
 func TestHeaderSetClusterName(t *testing.T) {
 	h := ui.NewHeader(&ui.DefaultTheme)
 	assert.NotPanics(t, func() {
@@ -52,17 +30,9 @@ func TestHeaderSetClusterName(t *testing.T) {
 	})
 }
 
-func TestHeaderSetViewsEmpty(t *testing.T) {
+func TestHeaderSetReadOnly(t *testing.T) {
 	h := ui.NewHeader(&ui.DefaultTheme)
 	assert.NotPanics(t, func() {
-		h.SetViews(nil)
-	})
-}
-
-func TestHeaderSetCurrentViewNotInList(t *testing.T) {
-	h := ui.NewHeader(&ui.DefaultTheme)
-	h.SetViews([]string{"nodes"})
-	assert.NotPanics(t, func() {
-		h.SetCurrentView("nonexistent")
+		h.SetReadOnly(true)
 	})
 }
