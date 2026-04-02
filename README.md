@@ -1,7 +1,7 @@
-# w9s — Terminal UI for Warewulf
+# W9s — The Warewulf Dashboard For Your Terminal
 
 <p align="center">
-  <strong>w9s</strong> — a terminal interface for managing <a href="https://warewulf.org">Warewulf</a> HPC clusters
+  <strong>w9s</strong> — a stylish companion to <code>wwctl</code> for managing <a href="https://warewulf.org">Warewulf</a> HPC clusters
 </p>
 
 <p align="center">
@@ -11,7 +11,7 @@
   <a href="https://opensource.org/licenses/Apache-2.0"><img src="https://img.shields.io/badge/License-Apache_2.0-blue.svg?style=flat-square" alt="License"></a>
 </p>
 
-w9s provides a real-time terminal UI for [Warewulf](https://github.com/warewulf/warewulf) cluster provisioning and management. It connects to the Warewulf v4 REST API (v4.4+, recommended v4.6.1+). Add nodes, manage profiles, import images, browse overlays, render templates, export data, and switch between clusters — all from your terminal. Inspired by [k9s](https://k9scli.io/) and [s9s](https://github.com/jontk/s9s).
+w9s connects to the [Warewulf](https://github.com/warewulf/warewulf) v4 REST API (v4.4+, recommended v4.6.1+) and gives you a real-time dashboard for cluster provisioning and management. Add nodes, manage profiles, import images, browse overlays, render templates, export data, and switch between clusters — all keyboard-first, no browser needed. Inspired by [k9s](https://k9scli.io/) and [s9s](https://github.com/jontk/s9s).
 
 <p align="center">
   <img src="docs/screenshots/w9s-demo.gif" alt="w9s demo" width="800">
