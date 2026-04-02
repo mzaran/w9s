@@ -1,0 +1,150 @@
+# GoReleaser configuration for w9s
+# See https://goreleaser.com for documentation
+
+version: 2
+
+project_name: w9s
+
+before:
+  hooks:
+    - go mod tidy
+    - go test ./...
+
+builds:
+  - id: w9s
+    main: ./cmd/w9s
+    binary: w9s
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+      - arm
+    goarm:
+      - "7"
+    ignore:
+      - goos: windows
+        goarch: arm
+      - goos: windows
+        goarch: arm64
+    ldflags:
+      - -s -w
+      - -X github.com/mzaran/w9s/internal/version.Version={{.Version}}
+      - -X github.com/mzaran/w9s/internal/version.Commit={{.Commit}}
+      - -X github.com/mzaran/w9s/internal/version.Date={{.Date}}
+      - -X github.com/mzaran/w9s/internal/version.BuiltBy=goreleaser
+
+archives:
+  - id: default
+    name_template: >-
+      {{ .ProjectName }}_
+      {{- .Version }}_
+      {{- title .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
+      {{- if .Arm }}v{{ .Arm }}{{ end }}
+    formats:
+      - tar.gz
+    files:
+      - LICENSE
+      - README.md
+      - config.example.yaml
+
+checksum:
+  name_template: 'checksums.txt'
+  algorithm: sha256
+
+snapshot:
+  version_template: "{{ incpatch .Version }}-next"
+
+changelog:
+  sort: asc
+  use: github
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+      - "^chore:"
+      - "^ci:"
+      - "Merge pull request"
+      - "Merge branch"
+  groups:
+    - title: "New Features"
+      regexp: '^.*?feat(\([[:word:]]+\))??!?:.+$'
+      order: 0
+    - title: "Bug Fixes"
+      regexp: '^.*?fix(\([[:word:]]+\))??!?:.+$'
+      order: 1
+    - title: "Performance Improvements"
+      regexp: '^.*?perf(\([[:word:]]+\))??!?:.+$'
+      order: 2
+    - title: "Other Changes"
+      order: 999
+
+nfpms:
+  - id: packages
+    package_name: w9s
+    description: "Terminal UI for Warewulf cluster management"
+    license: Apache-2.0
+    homepage: https://w9s.sh
+    maintainer: mzaran
+    formats:
+      - rpm
+      - deb
+    bindir: /usr/bin
+    contents:
+      - src: config.example.yaml
+        dst: /etc/w9s/config.example.yaml
+        type: config
+
+release:
+  github:
+    owner: mzaran
+    name: w9s
+  draft: false
+  prerelease: auto
+  mode: replace
+  header: |
+    ## Release {{ .Tag }} ({{ .Date }})
+
+    w9s {{ .Version }} — Terminal UI for Warewulf cluster management.
+
+    ### Installation
+
+    Download the appropriate binary for your platform below.
+
+    #### Linux
+    ```bash
+    curl -LO https://github.com/mzaran/w9s/releases/download/{{ .Tag }}/w9s_{{ .Version }}_Linux_x86_64.tar.gz
+    tar -xzf w9s_{{ .Version }}_Linux_x86_64.tar.gz
+    sudo mv w9s /usr/local/bin/
+    w9s version
+    ```
+
+    #### macOS
+    ```bash
+    curl -LO https://github.com/mzaran/w9s/releases/download/{{ .Tag }}/w9s_{{ .Version }}_Darwin_arm64.tar.gz
+    tar -xzf w9s_{{ .Version }}_Darwin_*.tar.gz
+    sudo mv w9s /usr/local/bin/
+    ```
+
+  footer: |
+    **Full Changelog**: https://github.com/mzaran/w9s/compare/{{ .PreviousTag }}...{{ .Tag }}
+
+# Docker images (optional)
+# dockers:
+#   - image_templates:
+#       - "ghcr.io/mzaran/w9s:{{ .Tag }}"
+#       - "ghcr.io/mzaran/w9s:latest"
+#     dockerfile: Dockerfile
+#     build_flag_templates:
+#       - "--pull"
+#       - "--label=org.opencontainers.image.created={{.Date}}"
+#       - "--label=org.opencontainers.image.title={{.ProjectName}}"
+#       - "--label=org.opencontainers.image.revision={{.FullCommit}}"
+#       - "--label=org.opencontainers.image.version={{.Version}}"

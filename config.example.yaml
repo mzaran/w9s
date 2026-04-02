@@ -1,0 +1,17 @@
+# w9s configuration — https://w9s.sh
+# Copy this file to ~/.config/w9s/config.yaml and edit as needed.
+
+refreshRate: "5s"
+defaultCluster: "production"
+
+clusters:
+  - name: production
+    cluster:
+      endpoint: "https://warewulf-server:9873"
+      username: "admin"
+      password: "changeme"
+      insecure: false
+      timeout: "10s"
+
+ui:
+  enableMouse: true
