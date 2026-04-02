@@ -145,7 +145,7 @@ func newTestServer(t *testing.T) *httptest.Server {
 		switch {
 		case path == "" && r.Method == http.MethodGet:
 			w.Header().Set("Content-Type", "application/json")
-			w.Write([]byte(cannedNodesJSON))
+			_, _ = w.Write([]byte(cannedNodesJSON))
 
 		case path == "overlays/build" && r.Method == http.MethodPost:
 			w.WriteHeader(http.StatusOK)
@@ -155,19 +155,19 @@ func newTestServer(t *testing.T) *httptest.Server {
 
 		case strings.HasSuffix(path, "/fields") && r.Method == http.MethodGet:
 			w.Header().Set("Content-Type", "application/json")
-			w.Write([]byte(cannedNodeFieldsJSON))
+			_, _ = w.Write([]byte(cannedNodeFieldsJSON))
 
 		case strings.HasSuffix(path, "/overlays") && r.Method == http.MethodGet:
 			w.Header().Set("Content-Type", "application/json")
-			w.Write([]byte(cannedNodeOverlayInfoJSON))
+			_, _ = w.Write([]byte(cannedNodeOverlayInfoJSON))
 
 		case strings.HasSuffix(path, "/raw") && r.Method == http.MethodGet:
 			w.Header().Set("Content-Type", "application/json")
-			w.Write([]byte(cannedSingleNodeJSON))
+			_, _ = w.Write([]byte(cannedSingleNodeJSON))
 
 		case path != "" && r.Method == http.MethodGet:
 			w.Header().Set("Content-Type", "application/json")
-			w.Write([]byte(cannedSingleNodeJSON))
+			_, _ = w.Write([]byte(cannedSingleNodeJSON))
 
 		case path != "" && r.Method == http.MethodPut:
 			w.WriteHeader(http.StatusOK)
@@ -191,11 +191,11 @@ func newTestServer(t *testing.T) *httptest.Server {
 		switch {
 		case path == "" && r.Method == http.MethodGet:
 			w.Header().Set("Content-Type", "application/json")
-			w.Write([]byte(cannedProfilesJSON))
+			_, _ = w.Write([]byte(cannedProfilesJSON))
 
 		case path != "" && r.Method == http.MethodGet:
 			w.Header().Set("Content-Type", "application/json")
-			w.Write([]byte(cannedSingleProfileJSON))
+			_, _ = w.Write([]byte(cannedSingleProfileJSON))
 
 		case path != "" && r.Method == http.MethodPut:
 			w.WriteHeader(http.StatusOK)
@@ -219,7 +219,7 @@ func newTestServer(t *testing.T) *httptest.Server {
 		switch {
 		case path == "" && r.Method == http.MethodGet:
 			w.Header().Set("Content-Type", "application/json")
-			w.Write([]byte(cannedImagesJSON))
+			_, _ = w.Write([]byte(cannedImagesJSON))
 
 		case strings.HasSuffix(path, "/import") && r.Method == http.MethodPost:
 			w.WriteHeader(http.StatusOK)
@@ -229,7 +229,7 @@ func newTestServer(t *testing.T) *httptest.Server {
 
 		case path != "" && r.Method == http.MethodGet:
 			w.Header().Set("Content-Type", "application/json")
-			w.Write([]byte(cannedSingleImageJSON))
+			_, _ = w.Write([]byte(cannedSingleImageJSON))
 
 		case path != "" && r.Method == http.MethodPatch:
 			w.WriteHeader(http.StatusOK)
@@ -250,11 +250,11 @@ func newTestServer(t *testing.T) *httptest.Server {
 		switch {
 		case path == "" && r.Method == http.MethodGet:
 			w.Header().Set("Content-Type", "application/json")
-			w.Write([]byte(cannedOverlaysJSON))
+			_, _ = w.Write([]byte(cannedOverlaysJSON))
 
 		case strings.HasSuffix(path, "/file") && r.Method == http.MethodGet:
 			w.Header().Set("Content-Type", "application/json")
-			w.Write([]byte(cannedOverlayFileJSON))
+			_, _ = w.Write([]byte(cannedOverlayFileJSON))
 
 		case strings.HasSuffix(path, "/file") && r.Method == http.MethodPut:
 			w.WriteHeader(http.StatusOK)
@@ -264,7 +264,7 @@ func newTestServer(t *testing.T) *httptest.Server {
 
 		case path != "" && r.Method == http.MethodGet:
 			w.Header().Set("Content-Type", "application/json")
-			w.Write([]byte(cannedOverlaysJSON))
+			_, _ = w.Write([]byte(cannedOverlaysJSON))
 
 		case path != "" && r.Method == http.MethodPut:
 			w.WriteHeader(http.StatusOK)
@@ -281,7 +281,7 @@ func newTestServer(t *testing.T) *httptest.Server {
 	mux.HandleFunc("/api/", func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/api/" && r.Method == http.MethodGet {
 			w.Header().Set("Content-Type", "application/json")
-			w.Write([]byte(`{"version": "4.5.8"}`))
+			_, _ = w.Write([]byte(`{"version": "4.5.8"}`))
 			return
 		}
 		w.WriteHeader(http.StatusNotFound)
@@ -660,7 +660,7 @@ func TestServerInfo(t *testing.T) {
 func TestHTTPError401(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusUnauthorized)
-		w.Write([]byte("bad credentials"))
+		_, _ = w.Write([]byte("bad credentials"))
 	}))
 	defer srv.Close()
 	c := newClient(t, srv.URL)
@@ -676,7 +676,7 @@ func TestHTTPError401(t *testing.T) {
 func TestHTTPError403(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusForbidden)
-		w.Write([]byte("insufficient permissions"))
+		_, _ = w.Write([]byte("insufficient permissions"))
 	}))
 	defer srv.Close()
 	c := newClient(t, srv.URL)
@@ -691,7 +691,7 @@ func TestHTTPError403(t *testing.T) {
 func TestHTTPError404(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
-		w.Write([]byte("no such node"))
+		_, _ = w.Write([]byte("no such node"))
 	}))
 	defer srv.Close()
 	c := newClient(t, srv.URL)
@@ -706,7 +706,7 @@ func TestHTTPError404(t *testing.T) {
 func TestHTTPError500(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte("internal error"))
+		_, _ = w.Write([]byte("internal error"))
 	}))
 	defer srv.Close()
 	c := newClient(t, srv.URL)
@@ -765,7 +765,7 @@ func TestBasicAuthHeaderSent(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		receivedUser, receivedPass, authPresent = r.BasicAuth()
 		w.Header().Set("Content-Type", "application/json")
-		w.Write([]byte(`{}`))
+		_, _ = w.Write([]byte(`{}`))
 	}))
 	defer srv.Close()
 
@@ -789,7 +789,7 @@ func TestNoAuthHeaderWhenNotConfigured(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		_, _, authPresent = r.BasicAuth()
 		w.Header().Set("Content-Type", "application/json")
-		w.Write([]byte(`{}`))
+		_, _ = w.Write([]byte(`{}`))
 	}))
 	defer srv.Close()
 
@@ -809,7 +809,7 @@ func TestImageImportSendsSourceInBody(t *testing.T) {
 
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		body, _ := io.ReadAll(r.Body)
-		json.Unmarshal(body, &receivedBody)
+		_ = json.Unmarshal(body, &receivedBody)
 		w.WriteHeader(http.StatusOK)
 	}))
 	defer srv.Close()
@@ -842,7 +842,7 @@ func TestOverlayGetFileQueryParams(t *testing.T) {
 		receivedPath = r.URL.Query().Get("path")
 		receivedRender = r.URL.Query().Get("render")
 		w.Header().Set("Content-Type", "application/json")
-		w.Write([]byte(cannedOverlayFileJSON))
+		_, _ = w.Write([]byte(cannedOverlayFileJSON))
 	}))
 	defer srv.Close()
 	c := newClient(t, srv.URL)
@@ -980,7 +980,7 @@ func TestWithEndpointTrailingSlash(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		receivedPath = r.URL.Path
 		w.Header().Set("Content-Type", "application/json")
-		w.Write([]byte(`{}`))
+		_, _ = w.Write([]byte(`{}`))
 	}))
 	defer srv.Close()
 
@@ -1010,7 +1010,7 @@ func TestContentTypeHeader(t *testing.T) {
 		gotContentType = r.Header.Get("Content-Type")
 		gotAccept = r.Header.Get("Accept")
 		w.Header().Set("Content-Type", "application/json")
-		w.Write([]byte(`{}`))
+		_, _ = w.Write([]byte(`{}`))
 	}))
 	defer srv.Close()
 	c := newClient(t, srv.URL)
@@ -1026,7 +1026,7 @@ func TestContentTypeHeader(t *testing.T) {
 func TestServerInfoFallback(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("not json"))
+		_, _ = w.Write([]byte("not json"))
 	}))
 	defer srv.Close()
 	c := newClient(t, srv.URL)
@@ -1105,7 +1105,7 @@ func TestNodeListWithVariousWWBoolValues(t *testing.T) {
 
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		w.Write([]byte(cannedJSON))
+		_, _ = w.Write([]byte(cannedJSON))
 	}))
 	defer srv.Close()
 	c := newClient(t, srv.URL)
@@ -1166,10 +1166,10 @@ func TestHTTPStatusCodes(t *testing.T) {
 			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 				if tc.statusCode >= 200 && tc.statusCode < 300 {
 					w.Header().Set("Content-Type", "application/json")
-					w.Write([]byte(`{}`))
+					_, _ = w.Write([]byte(`{}`))
 				} else {
 					w.WriteHeader(tc.statusCode)
-					w.Write([]byte("error body"))
+					_, _ = w.Write([]byte("error body"))
 				}
 			}))
 			defer srv.Close()

@@ -226,6 +226,7 @@ clusters:
 func TestXDGPathPreference(t *testing.T) {
 	home := t.TempDir()
 	t.Setenv("HOME", home)
+	t.Setenv("USERPROFILE", home) // Windows uses USERPROFILE for os.UserHomeDir
 	t.Setenv("W9S_ENDPOINT", "")
 	t.Setenv("W9S_USERNAME", "")
 	t.Setenv("W9S_PASSWORD", "")

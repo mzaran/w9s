@@ -139,8 +139,8 @@ type Partition struct {
 	Number             string `json:"number,omitempty"`
 	SizeMiB            string `json:"size_mib,omitempty"`
 	StartMiB           string `json:"start_mib,omitempty"`
-	TypeGuid           string `json:"type_guid,omitempty"`
-	Guid               string `json:"guid,omitempty"`
+	TypeGUID           string `json:"type_guid,omitempty"`
+	GUID               string `json:"guid,omitempty"`
 	WipePartitionEntry *bool  `json:"wipe_partition_entry,omitempty"`
 	ShouldExist        *bool  `json:"should_exist,omitempty"`
 	Resize             *bool  `json:"resize,omitempty"`
@@ -151,7 +151,7 @@ type FileSystem struct {
 	Format         string   `json:"format,omitempty"`
 	Path           string   `json:"path,omitempty"`
 	Label          string   `json:"label,omitempty"`
-	Uuid           string   `json:"uuid,omitempty"`
+	UUID           string   `json:"uuid,omitempty"`
 	MountOptions   string   `json:"mount_options,omitempty"`
 	WipeFileSystem *bool    `json:"wipe_filesystem,omitempty"`
 	Options        []string `json:"options,omitempty"`
@@ -177,7 +177,7 @@ type OverlayFile struct {
 	Path     string `json:"path"`
 	Contents string `json:"contents"`
 	Perms    uint32 `json:"perms"`
-	Uid      uint32 `json:"uid"`
+	UID      uint32 `json:"uid"`
 	Gid      uint32 `json:"gid"`
 }
 

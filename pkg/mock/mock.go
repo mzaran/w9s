@@ -10,8 +10,8 @@ import (
 	"github.com/mzaran/w9s/internal/dao"
 )
 
-// MockWarewulfClient is an in-memory implementation of dao.WarewulfClient.
-type MockWarewulfClient struct {
+// WarewulfClient is an in-memory implementation of dao.WarewulfClient.
+type WarewulfClient struct {
 	nodes    *mockNodeManager
 	profiles *mockProfileManager
 	images   *mockImageManager
@@ -23,7 +23,7 @@ type MockWarewulfClient struct {
 // NewMockClient creates a new mock client populated with sample data.
 // Simulates a small delay on operations for realism.
 func NewMockClient() dao.WarewulfClient {
-	c := &MockWarewulfClient{
+	c := &WarewulfClient{
 		delay: 50 * time.Millisecond,
 	}
 	c.nodes = &mockNodeManager{data: make(map[string]*dao.WwNode), delay: c.delay}
@@ -37,7 +37,7 @@ func NewMockClient() dao.WarewulfClient {
 
 // NewFastMockClient creates a mock client with zero delay, suitable for tests.
 func NewFastMockClient() dao.WarewulfClient {
-	c := &MockWarewulfClient{
+	c := &WarewulfClient{
 		delay: 0,
 	}
 	c.nodes = &mockNodeManager{data: make(map[string]*dao.WwNode), delay: 0}
@@ -49,15 +49,15 @@ func NewFastMockClient() dao.WarewulfClient {
 	return c
 }
 
-func (c *MockWarewulfClient) Nodes() dao.NodeManager       { return c.nodes }
-func (c *MockWarewulfClient) Profiles() dao.ProfileManager { return c.profiles }
-func (c *MockWarewulfClient) Images() dao.ImageManager     { return c.images }
-func (c *MockWarewulfClient) Overlays() dao.OverlayManager { return c.overlays }
-func (c *MockWarewulfClient) Power() dao.PowerManager      { return c.power }
-func (c *MockWarewulfClient) HasPower() bool               { return true }
-func (c *MockWarewulfClient) Close() error                 { return nil }
+func (c *WarewulfClient) Nodes() dao.NodeManager       { return c.nodes }
+func (c *WarewulfClient) Profiles() dao.ProfileManager { return c.profiles }
+func (c *WarewulfClient) Images() dao.ImageManager     { return c.images }
+func (c *WarewulfClient) Overlays() dao.OverlayManager { return c.overlays }
+func (c *WarewulfClient) Power() dao.PowerManager      { return c.power }
+func (c *WarewulfClient) HasPower() bool               { return true }
+func (c *WarewulfClient) Close() error                 { return nil }
 
-func (c *MockWarewulfClient) ServerInfo() (*dao.ServerInfo, error) {
+func (c *WarewulfClient) ServerInfo() (*dao.ServerInfo, error) {
 	return &dao.ServerInfo{Version: "4.5.0-mock"}, nil
 }
 

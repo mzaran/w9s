@@ -47,9 +47,13 @@ func LoadSkin(name string) (*Skin, error) {
 		return &s, nil
 	}
 
-	configDir, err := os.UserConfigDir()
-	if err != nil {
-		return nil, fmt.Errorf("skin %q not found: %w", name, err)
+	configDir := os.Getenv("XDG_CONFIG_HOME")
+	if configDir == "" {
+		var err error
+		configDir, err = os.UserConfigDir()
+		if err != nil {
+			return nil, fmt.Errorf("skin %q not found: %w", name, err)
+		}
 	}
 	path := filepath.Join(configDir, "w9s", "skins", name+".yaml")
 	data, err := os.ReadFile(path)

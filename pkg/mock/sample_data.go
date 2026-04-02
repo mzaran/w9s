@@ -8,7 +8,7 @@ import (
 )
 
 // populateSampleData fills the mock client with realistic sample cluster data.
-func populateSampleData(c *MockWarewulfClient) {
+func populateSampleData(c *WarewulfClient) {
 	populateProfiles(c)
 	populateImages(c)
 	populateOverlays(c)
@@ -16,7 +16,7 @@ func populateSampleData(c *MockWarewulfClient) {
 	populatePowerStatus(c)
 }
 
-func populateProfiles(c *MockWarewulfClient) {
+func populateProfiles(c *WarewulfClient) {
 	c.profiles.data["default"] = &dao.WwProfile{
 		Comment:        "Default compute node profile",
 		ClusterName:    "mycluster",
@@ -48,7 +48,7 @@ func populateProfiles(c *MockWarewulfClient) {
 	}
 }
 
-func populateImages(c *MockWarewulfClient) {
+func populateImages(c *WarewulfClient) {
 	c.images.data["rocky9"] = &dao.WwImage{
 		Kernels:   []string{"5.14.0-362.el9.x86_64", "5.14.0-284.el9.x86_64"},
 		Size:      2254857830, // ~2.1 GB
@@ -64,7 +64,7 @@ func populateImages(c *MockWarewulfClient) {
 	}
 }
 
-func populateOverlays(c *MockWarewulfClient) {
+func populateOverlays(c *WarewulfClient) {
 	c.overlays.data["wwinit"] = &dao.WwOverlay{
 		Files: []string{
 			"/etc/hostname",
@@ -105,7 +105,7 @@ func populateOverlays(c *MockWarewulfClient) {
 	}
 }
 
-func populateNodes(c *MockWarewulfClient) {
+func populateNodes(c *WarewulfClient) {
 	// 8 compute nodes: compute-01 through compute-08
 	for i := 1; i <= 8; i++ {
 		name := fmt.Sprintf("compute-%02d", i)
@@ -189,6 +189,6 @@ func populateNodes(c *MockWarewulfClient) {
 	}
 }
 
-func populatePowerStatus(_ *MockWarewulfClient) {
+func populatePowerStatus(_ *WarewulfClient) {
 	// Power status is set inline during populateNodes.
 }
