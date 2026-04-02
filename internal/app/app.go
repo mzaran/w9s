@@ -241,6 +241,20 @@ func (a *App) initView(v views.View) {
 		})
 	}
 
+	// Wire spinner callbacks.
+	type spinnerAware interface {
+		SetShowSpinnerFn(func(string))
+		SetHideSpinnerFn(func())
+	}
+	if sa, ok := v.(spinnerAware); ok {
+		sa.SetShowSpinnerFn(func(msg string) {
+			a.statusBar.ShowSpinner(msg)
+		})
+		sa.SetHideSpinnerFn(func() {
+			a.statusBar.HideSpinner()
+		})
+	}
+
 	a.viewMgr.Register(v)
 	prim := v.Render()
 	if prim != nil {

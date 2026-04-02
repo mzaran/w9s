@@ -294,6 +294,7 @@ func (rv *ResourceView[T]) handleAction(event *tcell.EventKey) *tcell.EventKey {
 			ui.ShowConfirm(rv.App(), rv.Pages(), act.Label,
 				fmt.Sprintf("Are you sure you want to %s '%s'?", strings.ToLower(act.Label), n),
 				func() {
+					rv.ShowSpinner(act.Label + " '" + n + "'...")
 					go func() {
 						if err := act.Execute(rv.Ctx(), n, item); err != nil {
 							rv.ShowStatusError(act.Label + " failed: " + err.Error())
@@ -308,6 +309,7 @@ func (rv *ResourceView[T]) handleAction(event *tcell.EventKey) *tcell.EventKey {
 		} else {
 			act := action
 			n := name
+			rv.ShowSpinner(act.Label + " '" + n + "'...")
 			go func() {
 				if err := act.Execute(rv.Ctx(), n, item); err != nil {
 					rv.ShowStatusError(act.Label + " failed: " + err.Error())

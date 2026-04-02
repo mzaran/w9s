@@ -81,3 +81,46 @@ func TestStatusBarFlashBlocksHints(t *testing.T) {
 		sb.SetHints([]string{"q Quit"})
 	})
 }
+
+func TestStatusBarShowSpinner(t *testing.T) {
+	sb := ui.NewStatusBar(&ui.DefaultTheme)
+	sb.ShowSpinner("Building image...")
+	assert.True(t, sb.IsSpinnerActive(), "spinner should be active after ShowSpinner")
+	sb.HideSpinner()
+	assert.False(t, sb.IsSpinnerActive(), "spinner should be inactive after HideSpinner")
+}
+
+func TestStatusBarHideSpinnerIdempotent(t *testing.T) {
+	sb := ui.NewStatusBar(&ui.DefaultTheme)
+	// HideSpinner when no spinner is active should not panic.
+	assert.NotPanics(t, func() {
+		sb.HideSpinner()
+	})
+}
+
+func TestStatusBarShowErrorAutoHidesSpinner(t *testing.T) {
+	sb := ui.NewStatusBar(&ui.DefaultTheme)
+	sb.ShowSpinner("Building...")
+	assert.True(t, sb.IsSpinnerActive())
+	sb.ShowError("build failed")
+	assert.False(t, sb.IsSpinnerActive(), "ShowError should auto-hide spinner")
+}
+
+func TestStatusBarShowSuccessAutoHidesSpinner(t *testing.T) {
+	sb := ui.NewStatusBar(&ui.DefaultTheme)
+	sb.ShowSpinner("Building...")
+	assert.True(t, sb.IsSpinnerActive())
+	sb.ShowSuccess("build completed")
+	assert.False(t, sb.IsSpinnerActive(), "ShowSuccess should auto-hide spinner")
+}
+
+func TestStatusBarSpinnerRestoresHints(t *testing.T) {
+	sb := ui.NewStatusBar(&ui.DefaultTheme)
+	hints := []string{"q Quit", "/ Filter"}
+	sb.SetHints(hints)
+	sb.ShowSpinner("Loading...")
+	sb.HideSpinner()
+	// After HideSpinner, the bar should not panic and hints should be restored.
+	// We can't easily check rendered text, but we verify no panic.
+	assert.False(t, sb.IsSpinnerActive())
+}

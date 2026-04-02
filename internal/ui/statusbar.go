@@ -8,14 +8,21 @@ import (
 	"github.com/rivo/tview"
 )
 
+// spinnerChars are braille characters used for the animated spinner.
+var spinnerChars = []rune{'⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'}
+
 // StatusBar is the bottom bar showing keyboard hints, flash messages, and item count.
 type StatusBar struct {
 	*tview.TextView
-	theme      *Theme
-	app        *tview.Application
-	lastHints  []string
-	clearTimer *time.Timer
-	flashing   bool // true while a flash message is displayed
+	theme         *Theme
+	app           *tview.Application
+	lastHints     []string
+	clearTimer    *time.Timer
+	flashing      bool // true while a flash message is displayed
+	spinnerMsg    string
+	spinnerActive bool
+	spinnerFrame  int
+	spinnerStop   chan struct{}
 }
 
 // NewStatusBar creates a new themed status bar.
@@ -66,6 +73,11 @@ func (s *StatusBar) ShowSuccess(msg string) {
 }
 
 func (s *StatusBar) showFlash(msg string, color tcell.Color) {
+	// Auto-hide spinner when a result arrives.
+	if s.spinnerActive {
+		s.spinnerActive = false
+		close(s.spinnerStop)
+	}
 	if s.clearTimer != nil {
 		s.clearTimer.Stop()
 	}
@@ -82,6 +94,60 @@ func (s *StatusBar) showFlash(msg string, color tcell.Color) {
 			})
 		}
 	})
+}
+
+// ShowSpinner starts an animated spinner with the given message.
+// The spinner auto-cycles through braille characters at 80ms intervals.
+// Call HideSpinner to stop, or it auto-stops when ShowSuccess/ShowError is called.
+func (s *StatusBar) ShowSpinner(msg string) {
+	s.spinnerMsg = msg
+	s.spinnerActive = true
+	s.spinnerFrame = 0
+	s.spinnerStop = make(chan struct{})
+
+	s.updateSpinnerDisplay()
+
+	go func() {
+		ticker := time.NewTicker(80 * time.Millisecond)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ticker.C:
+				s.spinnerFrame = (s.spinnerFrame + 1) % len(spinnerChars)
+				if s.app != nil {
+					s.app.QueueUpdateDraw(func() {
+						if s.spinnerActive {
+							s.updateSpinnerDisplay()
+						}
+					})
+				}
+			case <-s.spinnerStop:
+				return
+			}
+		}
+	}()
+}
+
+// HideSpinner stops the spinner and restores the last hints.
+func (s *StatusBar) HideSpinner() {
+	if !s.spinnerActive {
+		return
+	}
+	s.spinnerActive = false
+	close(s.spinnerStop)
+	s.SetHints(s.lastHints)
+}
+
+// IsSpinnerActive reports whether the spinner is currently running.
+func (s *StatusBar) IsSpinnerActive() bool {
+	return s.spinnerActive
+}
+
+func (s *StatusBar) updateSpinnerDisplay() {
+	char := spinnerChars[s.spinnerFrame]
+	s.Clear()
+	hex := ColorToHex(s.theme.HintFg)
+	fmt.Fprintf(s, " [#%06x::b]%c[-:-:-] [#%06x]%s[-]", hex, char, hex, s.spinnerMsg)
 }
 
 // SetCount appends a right-aligned count (e.g., "10 nodes").

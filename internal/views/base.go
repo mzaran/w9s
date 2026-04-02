@@ -42,7 +42,9 @@ type BaseView struct {
 	focused      atomic.Bool
 	lastErrMu    sync.Mutex
 	lastErr      error
-	statusMsgFn  func(msg string, isError bool)
+	statusMsgFn    func(msg string, isError bool)
+	showSpinnerFn  func(msg string)
+	hideSpinnerFn  func()
 }
 
 // NewBaseView creates a new BaseView with the given name and title.
@@ -136,6 +138,12 @@ func (b *BaseView) SetLastError(err error) {
 // SetStatusMessageFn sets the callback for displaying flash messages in the status bar.
 func (b *BaseView) SetStatusMessageFn(fn func(string, bool)) { b.statusMsgFn = fn }
 
+// SetShowSpinnerFn sets the callback for showing the spinner in the status bar.
+func (b *BaseView) SetShowSpinnerFn(fn func(string)) { b.showSpinnerFn = fn }
+
+// SetHideSpinnerFn sets the callback for hiding the spinner in the status bar.
+func (b *BaseView) SetHideSpinnerFn(fn func()) { b.hideSpinnerFn = fn }
+
 // ShowStatusMessage displays a success flash message in the status bar.
 func (b *BaseView) ShowStatusMessage(msg string) {
 	if b.statusMsgFn != nil {
@@ -147,6 +155,20 @@ func (b *BaseView) ShowStatusMessage(msg string) {
 func (b *BaseView) ShowStatusError(msg string) {
 	if b.statusMsgFn != nil {
 		b.statusMsgFn(msg, true)
+	}
+}
+
+// ShowSpinner starts the status bar spinner with the given message.
+func (b *BaseView) ShowSpinner(msg string) {
+	if b.showSpinnerFn != nil {
+		b.showSpinnerFn(msg)
+	}
+}
+
+// HideSpinner stops the status bar spinner.
+func (b *BaseView) HideSpinner() {
+	if b.hideSpinnerFn != nil {
+		b.hideSpinnerFn()
 	}
 }
 
